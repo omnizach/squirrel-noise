@@ -24,7 +24,7 @@ test('randomVector3D is on unit circle', t => {
 test('randomVector3D averages to origin (no bias)', t => {
   const nv = randomVector3D()
 
-  const brown: readonly [number, number, number] = [0, 0, 0]
+  const brown: [number, number, number] = [0, 0, 0]
 
   for (let i = 0; i < 100000; i++) {
     const v = nv()
@@ -44,7 +44,7 @@ test('randomVector3D averages to origin (no bias)', t => {
 test('randomVector3D axes are evenly spread', t => {
   const nv = randomVector3D()
 
-  const brown: readonly [number, number, number] = [0, 0, 0]
+  const brown: [number, number, number] = [0, 0, 0]
 
   for (let i = 0; i < 30000; i++) {
     const v = nv()
