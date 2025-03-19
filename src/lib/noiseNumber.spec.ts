@@ -1,4 +1,5 @@
 import test from 'ava'
+
 import { noiseNumber, randomNumber } from './noiseNumber'
 
 test('noiseNumber is consistent', t => {

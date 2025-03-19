@@ -1,4 +1,5 @@
 import test from 'ava'
+
 import { noiseList, randomList } from './noiseList'
 
 test('noiseList is fair', t => {

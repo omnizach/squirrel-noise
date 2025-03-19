@@ -1,4 +1,5 @@
 import test from 'ava'
+
 import { noiseFactory } from './noiseFactory'
 
 test('noiseFactory produces accurate output', t => {

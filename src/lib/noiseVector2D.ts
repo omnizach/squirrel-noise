@@ -1,6 +1,6 @@
 import { noiseFactory } from './noiseFactory'
 
-const thetaToRect: (theta: number) => [number, number] = (theta: number) => [
+const thetaToRect: (theta: number) => readonly [number, number] = (theta: number) => [
   Math.cos(theta),
   Math.sin(theta),
 ]

@@ -1,10 +1,11 @@
 import test from 'ava'
+
 import { noise } from './noise'
 
 test('noise generator produces sequence with no input', (t) => {
   const ng = noise({ generator: true })
 
-  let prev = NaN
+  const prev = NaN
 
   for (let i = 0; i < 10000; i++) {
     t.not(prev, ng(), 'output should vary')
@@ -32,7 +33,7 @@ test('noise range is valid', (t) => {
 test('noise discrete range is indexable and fair', (t) => {
   const ng = noise({ generator: true, range: [-2, 8], discrete: true })
 
-  let counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  const counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
   for (let i = 0; i < 100000; i++) {
     counts[ng() + 2]++
