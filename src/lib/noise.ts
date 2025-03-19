@@ -88,7 +88,9 @@ export const noise = ({
     const n = noise({ seed, dimensions, lerp }),
       s = scale([-0x7fffffff, 0x7fffffff], range)
 
-    return discrete ? (x = 0) => Math.floor(s(n(x))) : (x = 0) => s(n(x))
+    return discrete
+      ? (...xs: readonly (number | undefined)[]) => Math.floor(s(n(...xs))) // eslint-disable-line functional/functional-parameters
+      : (...xs: readonly (number | undefined)[]) => s(n(...xs)) // eslint-disable-line functional/functional-parameters
   }
 
   if (lerp) {

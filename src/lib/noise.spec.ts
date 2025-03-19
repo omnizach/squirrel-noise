@@ -97,6 +97,15 @@ test('noise works for 2d input', (t) => {
   }
 })
 
+test('noise varies in 2d with range', (t) => {
+  const n = noise({ dimensions: 2, range: [-1000, -100] })
+
+  for (let i = 0; i < 10; i++) {
+    t.not(n(i, 2), n(i + 1, 2))
+    t.not(n(2, i), n(2, i + 1))
+  }
+})
+
 test('noise lerp2d is smooth', (t) => {
   const n = noise({ dimensions: 2, range: [-100, 100], lerp: true })
 
