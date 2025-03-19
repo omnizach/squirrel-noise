@@ -3,8 +3,6 @@ import { squirrel5 } from './squirrel5'
 //const DIMENSION_PRIMES = [1, 198491317, 6542989, 357239]
 
 const reduceDimension = [
-  () => 0, // degenerate case
-  () => 0, // unused case
   (x?: number, y?: number) => (x ?? 0) + 198491317 * (y ?? 0),
   (x?: number, y?: number, z?: number) =>
     (x ?? 0) + 198491317 * (y ?? 0) + 6542989 * (z ?? 0),
@@ -132,7 +130,7 @@ export const noise = ({
   if (dimensions !== 1) {
     const n = noise({ seed })
     return (x?: number, y?: number, z?: number, w?: number) =>
-      n(reduceDimension[dimensions](x, y, z, w))
+      n(reduceDimension[dimensions-2](x, y, z, w))
   }
 
   // base case, just the default options (and seed)
