@@ -1,5 +1,5 @@
 {
-  "name": "squirrel-noise",
+  "name": "squirrel-noise-generators",
   "version": "1.0.1",
   "description": "A collection of fast noise functions based on Squirrel Eiserloh's implementation.",
   "main": "build/main/index.js",
