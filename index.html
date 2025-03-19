@@ -1,0 +1,255 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>squirrel-noise</title>
+	<meta name="description" content="Documentation for squirrel-noise">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="assets/js/search.json" data-base=".">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="index.html" class="title">squirrel-noise</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+							<input type="checkbox" id="tsd-filter-only-exported" />
+							<label class="tsd-widget" for="tsd-filter-only-exported">Only exported</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="globals.html">Globals</a>
+				</li>
+			</ul>
+			<h1>squirrel-noise</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<div class="tsd-panel tsd-typography">
+				<a href="#squirrel-noise" id="squirrel-noise" style="color: inherit; text-decoration: none;">
+					<h1>squirrel-noise</h1>
+				</a>
+				<p>A collection of fast noise functions based on Squirrel Eiserloh&#39;s implementation.</p>
+				<p>Noise functions are better than random number generators (although we have those too) because the outputs
+					are stable, repeatable/deterministic, and multi-dimensional. Think of a noise function as a (nearly) infinite
+					table of pre-generated random numbers. You can start anywhere you want, jump forward/back, etc. Noise
+				is much more versitile than random.</p>
+				<p>All the noise and random functions provided are function-functions. Meaning, you provide all
+					the options you want, and the library provides a function with all those options &quot;baked&quot; in.
+					This has some performance advantages, but it also results in much cleaner code. You don&#39;t
+					need to tote around all the options you want, you just have a simple function expecting
+				some numbers as input to produce noise from.</p>
+				<p>These functions are designed for quick noise/random usage. They are <em>not</em> cryptographically
+					sound, so it would be ill-advised to use this for password salts/hashes, or any other security
+				application.</p>
+				<p>Alternatively, there are more sophisticated options like Perlin or Simplex noise. These functions
+					have the advantage that they can provide varying levels of smoothness, while this algorithm more closely
+					matches white noise. The advantage of squirrel-noise is simplicity (zero dependencies, small code, straight-forward API)
+				and speed (order of millions of calls per second).</p>
+				<a href="#noise-functions" id="noise-functions" style="color: inherit; text-decoration: none;">
+					<h2>Noise Functions</h2>
+				</a>
+				<p>All noise functions accept input numbers and output various outputs that vary with the noise.
+				They are deterministic in that they will always output the same value for the same input.</p>
+				<pre><code>const n = noise<span class="hljs-constructor">Number({ <span class="hljs-params">seed</span>: 123, <span class="hljs-params">range</span>: [0,1] })</span>
+console.log(n(<span class="hljs-number">99</span>)) <span class="hljs-comment">// 303927878</span>
+</code></pre>
+				<a href="#random-functions" id="random-functions" style="color: inherit; text-decoration: none;">
+					<h2>Random Functions</h2>
+				</a>
+				<p>The random functions act like random number generators by producing varying output with
+					no input. The sequence they produce is still deterministic. If you recreate the random
+				function with the same options, it will produce the same sequence.</p>
+				<a href="#noise-options" id="noise-options" style="color: inherit; text-decoration: none;">
+					<h2>Noise Options</h2>
+				</a>
+				<a href="#seed" id="seed" style="color: inherit; text-decoration: none;">
+					<h3>seed</h3>
+				</a>
+				<p>An input number that varies the noise/sequence.</p>
+				<p>Default: 0</p>
+				<a href="#generator" id="generator" style="color: inherit; text-decoration: none;">
+					<h3>generator</h3>
+				</a>
+				<p>Makes the noise function generate a sequence. The resulting function ignores all inputs. Setting <code>generator: true</code> makes the function into the <code>random</code> variant.</p>
+				<p>Default: false</p>
+				<a href="#dimensions" id="dimensions" style="color: inherit; text-decoration: none;">
+					<h3>dimensions</h3>
+				</a>
+				<p>Determines how many input numbers are considered by the resulting noise function. For example:</p>
+				<pre><code><span class="hljs-attribute">const</span> ns = noiseNumber({ dimensions: <span class="hljs-number">2</span> })
+<span class="hljs-attribute">console</span>.log(ns(<span class="hljs-number">1</span>)) // -<span class="hljs-number">304090833</span>, <span class="hljs-number">2</span>nd parameter is assumed to be <span class="hljs-number">0</span>
+<span class="hljs-attribute">console</span>.log(ns(<span class="hljs-number">1</span>, <span class="hljs-number">1</span>)) // -<span class="hljs-number">286857965</span>
+<span class="hljs-attribute">console</span>.log(ns(<span class="hljs-number">1</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>)) // also -<span class="hljs-number">286857965</span> because it ignores the <span class="hljs-number">3</span>rd parameter
+</code></pre>
+				<p>Default: 1</p>
+				<a href="#range" id="range" style="color: inherit; text-decoration: none;">
+					<h3>range</h3>
+				</a>
+				<p>Changes the output to be in the given range <code>[min, max)</code>.
+				The default range is <code>[-0x7fffffff, 0x7fffffff]</code>, or a full 32-bit signed int.</p>
+				<a href="#discrete" id="discrete" style="color: inherit; text-decoration: none;">
+					<h2>discrete</h2>
+				</a>
+				<p>Converts the resulting number from a float to an int via <code>Math.floor</code>. This is useful if the result is used to index into an array, for example.
+					Keep in mind that the upper bound of the range is not included as a potential output. For example, to replicate rolling a 6-sided die (a D6),
+				the options would be: <code>{ discrete: true, range: [1, 7] }</code>.</p>
+				<p>Default: false</p>
+				<a href="#lerp" id="lerp" style="color: inherit; text-decoration: none;">
+					<h2>lerp</h2>
+				</a>
+				<p>Linear interpolates between fractional points. Behind the scenes, the noise function uses a lot of bit-twidling. In Javascript, this has the effect of coercing
+					any float numbers down (or up for negatives). So, for most noise functions, <code>n(1) = n(1.1) = n(1.99) != n(2.0)</code>. So, to smooth fractional inputs, enabling <code>lerp</code>
+				will interpolate between the closest whole values; i.e. <code>n(1.5)</code> will be half way between <code>n(1)</code> and <code>n(2)</code>.</p>
+				<p>Note: the output is not affected by this issue and will be continously with float/fractional values in the output range. If you want integer outputs, use the <code>discrete</code> option.</p>
+				<p><code>lerp</code> interpolates nearby inputs by the <code>dimensions</code> number. So, for <code>dimensions: 2</code>, <code>n(1.4, 2.3)</code> will interpolate between the points <code>n(1, 2)</code>, <code>n(2, 2)</code>, <code>n(1, 3)</code>, and <code>n(2, 4)</code>. Analygously, the containing cube of points are considered for the <code>dimensions: 3</code> case. Note: 4d interpolation is not implemented.</p>
+			</div>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class="globals  ">
+						<a href="globals.html"><em>Globals</em></a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
+						<a href="globals.html#noisefunction" class="tsd-kind-icon">Noise<wbr>Function</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#noiseoptions" class="tsd-kind-icon">Noise<wbr>Options</a>
+					</li>
+					<li class=" tsd-kind-type-alias tsd-has-type-parameter">
+						<a href="globals.html#noiseoutputmapper" class="tsd-kind-icon">Noise<wbr>Output<wbr>Mapper</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#bit_noise1" class="tsd-kind-icon">BIT_<wbr>NOISE1</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#bit_noise2" class="tsd-kind-icon">BIT_<wbr>NOISE2</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#bit_noise3" class="tsd-kind-icon">BIT_<wbr>NOISE3</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#noisenumber" class="tsd-kind-icon">noise<wbr>Number</a>
+					</li>
+					<li class=" tsd-kind-variable">
+						<a href="globals.html#reducedimension" class="tsd-kind-icon">reduce<wbr>Dimension</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#incrementor" class="tsd-kind-icon">incrementor</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#lerp1d" class="tsd-kind-icon">lerp1D</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#lerp2d" class="tsd-kind-icon">lerp2D</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#lerp3d" class="tsd-kind-icon">lerp3D</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#noise" class="tsd-kind-icon">noise</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#noiseboolean" class="tsd-kind-icon">noise<wbr>Boolean</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="globals.html#noisefactory" class="tsd-kind-icon">noise<wbr>Factory</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="globals.html#noiselist" class="tsd-kind-icon">noise<wbr>List</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#noisevector2d" class="tsd-kind-icon">noise<wbr>Vector2D</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#noisevector3d" class="tsd-kind-icon">noise<wbr>Vector3D</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#randomboolean" class="tsd-kind-icon">random<wbr>Boolean</a>
+					</li>
+					<li class=" tsd-kind-function tsd-has-type-parameter">
+						<a href="globals.html#randomlist" class="tsd-kind-icon">random<wbr>List</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#randomnumber" class="tsd-kind-icon">random<wbr>Number</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#randomvector2d" class="tsd-kind-icon">random<wbr>Vector2D</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#randomvector3d" class="tsd-kind-icon">random<wbr>Vector3D</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#scale" class="tsd-kind-icon">scale</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#squirrel3" class="tsd-kind-icon">squirrel3</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#squirrel5" class="tsd-kind-icon">squirrel5</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#thetatorect" class="tsd-kind-icon">theta<wbr>ToRect</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
