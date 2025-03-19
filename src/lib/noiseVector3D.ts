@@ -12,8 +12,8 @@ export const noiseVector3D = (
   const theta = noise({ ...options, range: [0, Math.PI * 2] }),
     z = noise({ ...options, seed: ~(options?.seed ?? 0), range: [-1, 1] })
 
+  // eslint-disable-next-line functional/functional-parameters
   return (...xs: readonly (number | undefined)[]) => {
-    // eslint-disable-line functional/functional-parameters
     const thetaHat = theta(...xs),
       zHat = z(...xs),
       r = Math.sqrt(1 - zHat ** 2)
