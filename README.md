@@ -78,7 +78,7 @@ the options would be: `{ discrete: true, range: [1, 7] }`.
 
 Default: false
 
-# lerp
+## lerp
 
 Linear interpolates between fractional points. Behind the scenes, the noise function uses a lot of bit-twidling. In Javascript, this has the effect of coercing
 any float numbers down (or up for negatives). So, for most noise functions, `n(1) = n(1.1) = n(1.99) != n(2.0)`. So, to smooth fractional inputs, enabling `lerp`
