@@ -1,9 +1,8 @@
 import { noiseFactory } from './noiseFactory'
 
-const thetaToRect: (theta: number) => readonly [number, number] = (theta: number) => [
-  Math.cos(theta),
-  Math.sin(theta),
-]
+const thetaToRect: (theta: number) => readonly [number, number] = (
+  theta: number
+) => [Math.cos(theta), Math.sin(theta)]
 
 export const noiseVector2D = () =>
   noiseFactory(thetaToRect, {

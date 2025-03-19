@@ -2,7 +2,7 @@ import test from 'ava'
 
 import { noiseList, randomList } from './noiseList'
 
-test('noiseList is fair', t => {
+test('noiseList is fair', (t) => {
   const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')
   const nl = noiseList(letters)
 
@@ -15,10 +15,12 @@ test('noiseList is fair', t => {
   t.log(counts)
 
   t.is(Object.keys(counts).length, 26)
-  Object.keys(counts).forEach(letter => t.true(counts[letter] > 900 && counts[letter] < 1100))
+  Object.keys(counts).forEach((letter) =>
+    t.true(counts[letter] > 900 && counts[letter] < 1100)
+  )
 })
 
-test('randomList is fair', t => {
+test('randomList is fair', (t) => {
   const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')
   const nl = randomList(letters)
 
@@ -32,5 +34,7 @@ test('randomList is fair', t => {
   t.log(counts)
 
   t.is(Object.keys(counts).length, 26)
-  Object.keys(counts).forEach(letter => t.true(counts[letter] > 900 && counts[letter] < 1100))
+  Object.keys(counts).forEach((letter) =>
+    t.true(counts[letter] > 900 && counts[letter] < 1100)
+  )
 })

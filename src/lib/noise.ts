@@ -88,9 +88,7 @@ export const noise = ({
     const n = noise({ seed, dimensions, lerp }),
       s = scale([-0x7fffffff, 0x7fffffff], range)
 
-    return discrete 
-      ? (x = 0) => Math.floor(s(n(x)))
-      : (x = 0) => s(n(x))
+    return discrete ? (x = 0) => Math.floor(s(n(x))) : (x = 0) => s(n(x))
   }
 
   if (lerp) {
@@ -130,7 +128,7 @@ export const noise = ({
   if (dimensions !== 1) {
     const n = noise({ seed })
     return (x?: number, y?: number, z?: number, w?: number) =>
-      n(reduceDimension[dimensions-2](x, y, z, w))
+      n(reduceDimension[dimensions - 2](x, y, z, w))
   }
 
   // base case, just the default options (and seed)

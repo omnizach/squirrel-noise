@@ -2,26 +2,26 @@ import test from 'ava'
 
 import { noiseVector2D, randomVector2D } from './noiseVector2D'
 
-test('noiseVector2D is on unit circle', t => {
+test('noiseVector2D is on unit circle', (t) => {
   const nv = noiseVector2D()
 
   for (let i = 0; i < 10000; i++) {
-    t.true(nv(i)[0]**2 + nv(i)[1]**2 > 0.9999)
-    t.true(nv(i)[0]**2 + nv(i)[1]**2 < 1.0001)
+    t.true(nv(i)[0] ** 2 + nv(i)[1] ** 2 > 0.9999)
+    t.true(nv(i)[0] ** 2 + nv(i)[1] ** 2 < 1.0001)
   }
 })
 
-test('randomVector2D is on unit circle', t => {
+test('randomVector2D is on unit circle', (t) => {
   const nv = randomVector2D()
 
   for (let i = 0; i < 10000; i++) {
     const v = nv()
-    t.true(v[0]**2 + v[1]**2 > 0.9999)
-    t.true(v[0]**2 + v[1]**2 < 1.0001)
+    t.true(v[0] ** 2 + v[1] ** 2 > 0.9999)
+    t.true(v[0] ** 2 + v[1] ** 2 < 1.0001)
   }
 })
 
-test('randomVector2D averages to origin (no bias)', t => {
+test('randomVector2D averages to origin (no bias)', (t) => {
   const nv = randomVector2D()
 
   const brown: [number, number] = [0, 0]

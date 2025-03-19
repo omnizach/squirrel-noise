@@ -2,16 +2,18 @@ import test from 'ava'
 
 import { noiseNumber, randomNumber } from './noiseNumber'
 
-test('noiseNumber is consistent', t => {
+test('noiseNumber is consistent', (t) => {
   const nn = noiseNumber()
 
-  const ps = [0,1,2,3,4,5,6,7,8,9,10]
+  const ps = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-  t.deepEqual(ps.map(x => nn(x)), ps.map(x => nn(x)))
+  t.deepEqual(
+    ps.map((x) => nn(x)),
+    ps.map((x) => nn(x))
+  )
 })
 
-
-test('noiseNumber default range', t => {
+test('noiseNumber default range', (t) => {
   const rn = randomNumber()
 
   let min = Infinity,
