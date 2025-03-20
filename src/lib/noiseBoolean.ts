@@ -23,7 +23,7 @@ export const noiseBoolean = (options?: Omit<NoiseOptions, 'range'>) =>
   })
 
 export const randomBoolean = (
-  options?: Omit<NoiseOptions, 'range' | 'dimensions'>
+  options?: Omit<NoiseOptions, 'range' | 'dimensions'>,
 ) =>
   noiseFactory((x: number) => x > 1, {
     ...options,

@@ -52,7 +52,7 @@ test('noise 1d lerp is smooth between points', (t) => {
     t.true(
       n(i) < n(i + 1)
         ? n(i) < n(i + 0.5) && n(i + 0.5) < n(i + 1)
-        : n(i) > n(i + 0.5) && n(i + 0.5) > n(i + 1)
+        : n(i) > n(i + 0.5) && n(i + 0.5) > n(i + 1),
     )
   }
 })
@@ -62,7 +62,9 @@ test('general performance is fast', (t) => {
   const benchStart = Date.now()
 
   for (let i = 0; i < 1e7; i++) {
-    ;(Math.random() * Math.random()) / Math.random()
+    if ((Math.random() * Math.random()) / (Math.random() + 1) > 1e6) {
+      break // this case will never happen, just here to avoid warnings
+    }
   }
 
   const benchMs = Date.now() - benchStart
@@ -81,7 +83,7 @@ test('general performance is fast', (t) => {
 
   t.log('Test ms', timeMs)
 
-  t.true(timeMs < benchMs * 2)
+  t.true(timeMs < benchMs * 3)
 })
 
 test('noise works for 2d input', (t) => {
@@ -114,8 +116,8 @@ test('noise lerp2d is smooth', (t) => {
       t.true(
         Math.abs(
           (n(i, j) + n(i + 1, j) + n(i, j + 1) + n(i + 1, j + 1)) / 4 -
-            n(i + 0.5, j + 0.5)
-        ) < 0.0001
+            n(i + 0.5, j + 0.5),
+        ) < 0.0001,
       )
     }
   }

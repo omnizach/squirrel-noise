@@ -3,7 +3,7 @@ import { noiseFactory } from './noiseFactory'
 
 export const noiseList = <T>(
   items: readonly T[],
-  options?: Omit<NoiseOptions, 'range' | 'discrete'>
+  options?: Omit<NoiseOptions, 'range' | 'discrete'>,
 ): NoiseFunction<T> =>
   noiseFactory((x: number) => items[x], {
     ...options,
@@ -13,5 +13,5 @@ export const noiseList = <T>(
 
 export const randomList = <T>(
   items: readonly T[],
-  options?: Omit<NoiseOptions, 'range' | 'discrete' | 'dimensions'>
+  options?: Omit<NoiseOptions, 'range' | 'discrete' | 'dimensions'>,
 ) => noiseList(items, { ...options, generator: true })

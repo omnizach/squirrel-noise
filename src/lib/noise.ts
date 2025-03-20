@@ -18,7 +18,7 @@ const lerp2D = (
   f10: number,
   f11: number,
   x: number,
-  y: number
+  y: number,
 ) =>
   f00 * (1 - x) * (1 - y) + f01 * (1 - x) * y + f10 * x * (1 - y) + f11 * x * y
 
@@ -33,7 +33,7 @@ const lerp3D = (
   f111: number,
   x: number,
   y: number,
-  z: number
+  z: number,
 ) =>
   f000 * (1 - x) * (1 - y) * (1 - z) +
   f100 * x * (1 - y) * (1 - z) +
@@ -47,13 +47,13 @@ const lerp3D = (
 const scale =
   (
     [yMin, yMax]: readonly [number, number],
-    [xMin, xMax]: readonly [number, number]
+    [xMin, xMax]: readonly [number, number],
   ) =>
   (inputY: number) =>
     ((inputY - yMin) / (yMax - yMin)) * (xMax - xMin) + xMin
 
 const incrementor = () => {
-  let x = 0 // eslint-disable-line functional/no-let
+  let x = 0
   return () => ++x
 }
 
@@ -89,8 +89,8 @@ export const noise = ({
       s = scale([-0x7fffffff, 0x7fffffff], range)
 
     return discrete
-      ? (...xs: readonly (number | undefined)[]) => Math.floor(s(n(...xs))) // eslint-disable-line functional/functional-parameters
-      : (...xs: readonly (number | undefined)[]) => s(n(...xs)) // eslint-disable-line functional/functional-parameters
+      ? (...xs: readonly (number | undefined)[]) => Math.floor(s(n(...xs)))
+      : (...xs: readonly (number | undefined)[]) => s(n(...xs))
   }
 
   if (lerp) {
@@ -105,7 +105,7 @@ export const noise = ({
           n(Math.ceil(x), Math.floor(y)),
           n(Math.ceil(x), Math.ceil(y)),
           x % 1,
-          y % 1
+          y % 1,
         )
     } else if (dimensions === 3) {
       return (x = 0, y = 0, z = 0) =>
@@ -120,10 +120,10 @@ export const noise = ({
           n(Math.ceil(x), Math.ceil(y), Math.ceil(z)),
           x % 1,
           y % 1,
-          z % 1
+          z % 1,
         )
     } else {
-      throw Error('Four dimensional LERP not implemented.') // eslint-disable-line functional/no-throw-statement
+      throw Error('Four dimensional LERP not implemented.')
     }
   }
 

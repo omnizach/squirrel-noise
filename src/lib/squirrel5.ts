@@ -10,7 +10,7 @@
 export const squirrel5 =
   (seed = 0) =>
   (position: number) => {
-    let mangledBits = position // eslint-disable-line functional/no-let
+    let mangledBits = position
     mangledBits *= 0xd2a80a3f
     mangledBits ^= mangledBits >>> 9 // this line was swapped
     mangledBits += seed // with this line

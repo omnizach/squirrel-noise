@@ -9,7 +9,7 @@ test('noiseNumber is consistent', (t) => {
 
   t.deepEqual(
     ps.map((x) => nn(x)),
-    ps.map((x) => nn(x))
+    ps.map((x) => nn(x)),
   )
 })
 
