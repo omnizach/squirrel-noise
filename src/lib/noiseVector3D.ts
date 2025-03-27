@@ -5,22 +5,25 @@
  */
 
 import { noise, NoiseFunction, NoiseOptions } from './noise'
+import { noiseTuple } from './noiseTuple'
+import { randomize } from './random'
 
 export const noiseVector3D = (
   options?: Omit<NoiseOptions, 'range' | 'discrete'>,
 ): NoiseFunction<readonly [number, number, number]> => {
-  const theta = noise({ ...options, range: [0, Math.PI * 2] }),
-    z = noise({ ...options, seed: ~(options?.seed ?? 0), range: [-1, 1] })
+  const cylinder = noiseTuple(
+    noise({ ...options, range: [0, Math.PI * 2] }),
+    noise({ ...options, seed: ~(options?.seed || 0), range: [-1, 1] }),
+  )
 
   return (...xs: readonly (number | undefined)[]) => {
-    const thetaHat = theta(...xs),
-      zHat = z(...xs),
-      r = Math.sqrt(1 - zHat ** 2)
+    const [θ, z] = cylinder(...xs),
+      r = Math.sqrt(1 - z ** 2)
 
-    return [r * Math.cos(thetaHat), r * Math.sin(thetaHat), zHat]
+    return [r * Math.cos(θ), r * Math.sin(θ), z]
   }
 }
 
 export const randomVector3D = (
   options?: Omit<NoiseOptions, 'range' | 'discrete' | 'dimensions'>,
-) => noiseVector3D({ ...options, generator: true })
+) => randomize(noiseVector3D({ ...options }))

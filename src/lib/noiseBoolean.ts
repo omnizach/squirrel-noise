@@ -1,5 +1,6 @@
 import { NoiseOptions } from './noise'
 import { noiseFactory } from './noiseFactory'
+import { randomize } from './random'
 
 /**
  * Creates a NoiseFunction that resolves to booleans
@@ -25,8 +26,9 @@ export const noiseBoolean = (options?: Omit<NoiseOptions, 'range'>) =>
 export const randomBoolean = (
   options?: Omit<NoiseOptions, 'range' | 'dimensions'>,
 ) =>
-  noiseFactory((x: number) => x > 1, {
-    ...options,
-    range: [0, 2],
-    generator: true,
-  })
+  randomize(
+    noiseFactory((x: number) => x > 1, {
+      ...options,
+      range: [0, 2],
+    }),
+  )

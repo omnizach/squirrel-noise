@@ -2,51 +2,16 @@ import test from 'ava'
 
 import { noise } from './noise'
 
-test('noise generator produces sequence with no input', (t) => {
-  const ng = noise({ generator: true })
+test('noise with no input is valid', (t) => {
+  const n = noise()
 
-  const prev = NaN
-
-  for (let i = 0; i < 10000; i++) {
-    t.not(prev, ng(), 'output should vary')
-  }
-})
-
-test('noise range is valid', (t) => {
-  const ng = noise({ generator: true, range: [0, 10] })
-
-  let min = 10,
-    max = 0
-
-  for (let i = 0; i < 10000; i++) {
-    const r = ng()
-    min = r < min ? r : min
-    max = r > max ? r : max
-  }
-
-  t.log(min, max)
-
-  t.true(min < 0.01)
-  t.true(max > 9.99)
-})
-
-test('noise discrete range is indexable and fair', (t) => {
-  const ng = noise({ generator: true, range: [-2, 8], discrete: true })
-
-  const counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-  for (let i = 0; i < 100000; i++) {
-    counts[ng() + 2]++
-  }
-
-  t.log(counts)
-
-  t.true(counts.reduce((p, c) => (p < c ? p : c), Infinity) > 9500)
-  t.true(counts.reduce((p, c) => (p > c ? p : c), -Infinity) < 10500)
+  t.is(typeof n(), 'number')
 })
 
 test('noise 1d lerp is smooth between points', (t) => {
   const n = noise({ range: [0, 10], lerp: true })
+
+  t.is(n(), n(0))
 
   for (let i = 0; i < 10; i++) {
     t.true(
@@ -57,37 +22,11 @@ test('noise 1d lerp is smooth between points', (t) => {
   }
 })
 
-test('general performance is fast', (t) => {
-  // benchmark
-  const benchStart = Date.now()
-
-  for (let i = 0; i < 1e7; i++) {
-    if ((Math.random() * Math.random()) / (Math.random() + 1) > 1e6) {
-      break // this case will never happen, just here to avoid warnings
-    }
-  }
-
-  const benchMs = Date.now() - benchStart
-
-  t.log('Benchmark ms', benchMs)
-
-  const testStart = Date.now()
-
-  const n = noise({ generator: true, range: [0, 1] }) // using some typical options that add time
-
-  for (let i = 0; i < 1e7; i++) {
-    n()
-  }
-
-  const timeMs = Date.now() - testStart
-
-  t.log('Test ms', timeMs)
-
-  t.true(timeMs < benchMs * 3)
-})
-
 test('noise works for 2d input', (t) => {
   const n = noise({ dimensions: 2 })
+
+  t.is(n(), n(0, 0))
+  t.is(n(2222), n(2222, 0))
 
   for (let i = 1; i < 100; i++) {
     for (let j = 1; j < 100; j++) {
@@ -111,6 +50,9 @@ test('noise varies in 2d with range', (t) => {
 test('noise lerp2d is smooth', (t) => {
   const n = noise({ dimensions: 2, range: [-100, 100], lerp: true })
 
+  t.is(n(), n(0, 0))
+  t.is(n(0), n(0, 0))
+
   for (let i = 1; i < 100; i++) {
     for (let j = 1; j < 100; j++) {
       t.true(
@@ -126,6 +68,10 @@ test('noise lerp2d is smooth', (t) => {
 test('noise works for 3d input', (t) => {
   const n = noise({ dimensions: 3 })
 
+  t.is(n(), n(0, 0, 0))
+  t.is(n(3333), n(3333, 0, 0))
+  t.is(n(3333, 0), n(3333, 0, 0))
+
   for (let i = 1; i < 20; i++) {
     for (let j = 1; j < 20; j++) {
       for (let k = 1; k < 20; k++) {
@@ -138,4 +84,70 @@ test('noise works for 3d input', (t) => {
       }
     }
   }
+})
+
+test('noise lerp3d is smooth', (t) => {
+  const n = noise({ dimensions: 3, range: [-100, 100], lerp: true })
+
+  t.is(n(), n(0, 0, 0))
+  t.is(n(0), n(0, 0, 0))
+  t.is(n(0, 0), n(0, 0, 0))
+
+  for (let i = 1; i < 20; i++) {
+    for (let j = 1; j < 20; j++) {
+      for (let k = 1; k < 20; k++) {
+        t.true(
+          Math.abs(
+            (n(i, j, k) +
+              n(i + 1, j, k) +
+              n(i, j + 1, k) +
+              n(i + 1, j + 1, k) +
+              n(i, j, k + 1) +
+              n(i + 1, j, k + 1) +
+              n(i, j + 1, k + 1) +
+              n(i + 1, j + 1, k + 1)) /
+              8 -
+              n(i + 0.5, j + 0.5, k + 0.5),
+          ) < 0.0001,
+        )
+      }
+    }
+  }
+})
+
+test('noise works with 4d input', (t) => {
+  const n = noise({ dimensions: 4 })
+
+  t.is(n(), n(0, 0, 0, 0))
+  t.is(n(4444), n(4444, 0, 0, 0))
+  t.is(n(4444, 0), n(4444, 0, 0, 0))
+  t.is(n(4444, 0, 0), n(4444, 0, 0, 0))
+
+  for (let i = 1; i < 10; i++) {
+    for (let j = 1; j < 10; j++) {
+      for (let k = 1; k < 10; k++) {
+        for (let m = 1; m < 10; m++) {
+          t.not(n(i, j, k, m), n(0, j, 0, 0))
+          t.not(n(i, j, k, m), n(i, 0, 0, 0))
+          t.not(n(i, j, k, m), n(0, 0, k, 0))
+          t.not(n(i, j, k, m), n(0, 0, 0, m))
+          t.not(n(i, j, k, m), n(i - 1, j, k, m))
+          t.not(n(i, j, k, m), n(i, j - 1, k, m))
+          t.not(n(i, j, k, m), n(i, j, k - 1, m))
+          t.not(n(i, j, k, m), n(i, j, k, m - 1))
+        }
+      }
+    }
+  }
+})
+
+test("noise lerp4d isn't implemented", (t) => {
+  t.throws(() => noise({ lerp: true, dimensions: 4 }))
+})
+
+test('noise works with random seeds', (t) => {
+  const n1 = noise({ seed: 'random' }),
+    n2 = noise({ seed: 'random' })
+
+  t.not(n1(999), n2(999))
 })

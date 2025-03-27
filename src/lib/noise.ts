@@ -3,11 +3,11 @@ import { squirrel5 } from './squirrel5'
 //const DIMENSION_PRIMES = [1, 198491317, 6542989, 357239]
 
 const reduceDimension = [
-  (x?: number, y?: number) => (x ?? 0) + 198491317 * (y ?? 0),
-  (x?: number, y?: number, z?: number) =>
-    (x ?? 0) + 198491317 * (y ?? 0) + 6542989 * (z ?? 0),
-  (x?: number, y?: number, z?: number, w?: number) =>
-    (x ?? 0) + 198491317 * (y ?? 0) + 6542989 * (z ?? 0) + 357239 * (w ?? 0),
+  (x: number = 0, y: number = 0) => x + 198491317 * y,
+  (x: number = 0, y: number = 0, z: number = 0) =>
+    x + 198491317 * y + 6542989 * z,
+  (x: number = 0, y: number = 0, z: number = 0, w: number = 0) =>
+    x + 198491317 * y + 6542989 * z + 357239 * w,
 ]
 
 const lerp1D = (f0: number, f1: number, x: number) => f0 + x * (f1 - f0)
@@ -52,17 +52,11 @@ const scale =
   (inputY: number) =>
     ((inputY - yMin) / (yMax - yMin)) * (xMax - xMin) + xMin
 
-const incrementor = () => {
-  let x = 0
-  return () => ++x
-}
-
 export type NoiseFunction<T> = (...xs: readonly (number | undefined)[]) => T
 
 export type NoiseOptions = {
   readonly dimensions?: 1 | 2 | 3 | 4
-  readonly seed?: number
-  readonly generator?: boolean
+  readonly seed?: number | 'random'
   readonly lerp?: boolean
   readonly range?: readonly [number, number]
   readonly discrete?: boolean
@@ -70,18 +64,19 @@ export type NoiseOptions = {
 
 export const noise = ({
   dimensions = 1,
-  seed = 0,
-  generator = false,
+  seed,
   lerp = false,
   range,
   discrete = false,
 }: NoiseOptions = {}): NoiseFunction<number> => {
-  // the generator option is not compatible with dimensions (it's essentially 0-dimensional)
-  // Also, lerp has no effect on the output, so both options are not passed through intentionally.
-  if (generator) {
-    const n = noise({ seed, range, discrete }),
-      c = incrementor()
-    return () => n(c())
+  if (seed === 'random') {
+    return noise({
+      dimensions,
+      lerp,
+      range,
+      discrete,
+      seed: Math.random() * 0x7fffffff,
+    })
   }
 
   if (range) {
@@ -134,6 +129,6 @@ export const noise = ({
   }
 
   // base case, just the default options (and seed)
-  const sq = squirrel5(seed)
+  const sq = squirrel5(seed ?? 0)
   return (x = 0) => sq(x)
 }
