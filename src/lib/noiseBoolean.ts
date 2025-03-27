@@ -18,17 +18,8 @@ import { randomize } from './random'
  * @returns NoiseFunction<boolean>
  */
 export const noiseBoolean = (options?: Omit<NoiseOptions, 'range'>) =>
-  noiseFactory((x: number) => x > 1, {
-    ...options,
-    range: [0, 2],
-  })
+  noiseFactory<boolean>((x: number) => !(x & 1), options)
 
 export const randomBoolean = (
   options?: Omit<NoiseOptions, 'range' | 'dimensions'>,
-) =>
-  randomize(
-    noiseFactory((x: number) => x > 1, {
-      ...options,
-      range: [0, 2],
-    }),
-  )
+) => randomize(noiseBoolean(options))

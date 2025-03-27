@@ -2,7 +2,7 @@ import test from 'ava'
 
 import { random } from './random'
 
-test('noise generator produces sequence with no input', (t) => {
+test('noise generator produces sequence with no input', t => {
   const ng = random()
 
   const prev = NaN
@@ -12,7 +12,7 @@ test('noise generator produces sequence with no input', (t) => {
   }
 })
 
-test('noise range is valid', (t) => {
+test('noise range is valid', t => {
   const ng = random({ range: [0, 10] })
 
   let min = 10,
@@ -30,7 +30,7 @@ test('noise range is valid', (t) => {
   t.true(max > 9.99)
 })
 
-test('noise discrete range is indexable and fair', (t) => {
+test('noise discrete range is indexable and fair', t => {
   const ng = random({ range: [-2, 8], discrete: true })
 
   const counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -45,7 +45,7 @@ test('noise discrete range is indexable and fair', (t) => {
   t.true(counts.reduce((p, c) => (p > c ? p : c), -Infinity) < 10500)
 })
 
-test('general performance is fast', (t) => {
+test('general performance is fast', t => {
   // benchmark
   const benchStart = Date.now()
 

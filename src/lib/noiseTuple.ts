@@ -24,5 +24,5 @@ export function noiseTuple<T1, T2, T3, T4, T5>(
   n5: NoiseFunction<T5>,
 ): NoiseFunction<[T1, T2, T3, T4, T5]>
 export function noiseTuple(...ns: NoiseFunction<unknown>[]) {
-  return (...xs: (number | undefined)[]) => ns.map((n) => n(...xs))
+  return (...xs: (number | undefined)[]) => ns.map(n => n(...xs))
 }

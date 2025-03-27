@@ -3,14 +3,14 @@ import { noiseTuple } from './noiseTuple'
 import { noiseNumber } from './noiseNumber'
 import { noiseList } from './noiseList'
 
-test('single tuple', (t) => {
+test('single tuple', t => {
   const src = noiseNumber(),
     tst = noiseTuple(src)
 
   t.is(src(2345), tst(2345)[0])
 })
 
-test('double tuple', (t) => {
+test('double tuple', t => {
   const src1 = noiseNumber(),
     src2 = noiseNumber({ seed: 9999 }),
     tst = noiseTuple(src1, src2)
@@ -19,7 +19,7 @@ test('double tuple', (t) => {
   t.is(src2(5678), tst(5678)[1])
 })
 
-test('mixed tuple type works with typescript', (t) => {
+test('mixed tuple type works with typescript', t => {
   const src1 = noiseNumber(),
     src2 = noiseList('0123456789abcdef'.split('')),
     tst = noiseTuple(src1, src2)

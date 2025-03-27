@@ -2,13 +2,13 @@ import test from 'ava'
 
 import { noise } from './noise'
 
-test('noise with no input is valid', (t) => {
+test('noise with no input is valid', t => {
   const n = noise()
 
   t.is(typeof n(), 'number')
 })
 
-test('noise 1d lerp is smooth between points', (t) => {
+test('noise 1d lerp is smooth between points', t => {
   const n = noise({ range: [0, 10], lerp: true })
 
   t.is(n(), n(0))
@@ -22,7 +22,7 @@ test('noise 1d lerp is smooth between points', (t) => {
   }
 })
 
-test('noise works for 2d input', (t) => {
+test('noise works for 2d input', t => {
   const n = noise({ dimensions: 2 })
 
   t.is(n(), n(0, 0))
@@ -38,7 +38,7 @@ test('noise works for 2d input', (t) => {
   }
 })
 
-test('noise varies in 2d with range', (t) => {
+test('noise varies in 2d with range', t => {
   const n = noise({ dimensions: 2, range: [-1000, -100] })
 
   for (let i = 0; i < 10; i++) {
@@ -47,7 +47,7 @@ test('noise varies in 2d with range', (t) => {
   }
 })
 
-test('noise lerp2d is smooth', (t) => {
+test('noise lerp2d is smooth', t => {
   const n = noise({ dimensions: 2, range: [-100, 100], lerp: true })
 
   t.is(n(), n(0, 0))
@@ -65,7 +65,7 @@ test('noise lerp2d is smooth', (t) => {
   }
 })
 
-test('noise works for 3d input', (t) => {
+test('noise works for 3d input', t => {
   const n = noise({ dimensions: 3 })
 
   t.is(n(), n(0, 0, 0))
@@ -86,7 +86,7 @@ test('noise works for 3d input', (t) => {
   }
 })
 
-test('noise lerp3d is smooth', (t) => {
+test('noise lerp3d is smooth', t => {
   const n = noise({ dimensions: 3, range: [-100, 100], lerp: true })
 
   t.is(n(), n(0, 0, 0))
@@ -115,7 +115,7 @@ test('noise lerp3d is smooth', (t) => {
   }
 })
 
-test('noise works with 4d input', (t) => {
+test('noise works with 4d input', t => {
   const n = noise({ dimensions: 4 })
 
   t.is(n(), n(0, 0, 0, 0))
@@ -141,11 +141,11 @@ test('noise works with 4d input', (t) => {
   }
 })
 
-test("noise lerp4d isn't implemented", (t) => {
+test("noise lerp4d isn't implemented", t => {
   t.throws(() => noise({ lerp: true, dimensions: 4 }))
 })
 
-test('noise works with random seeds', (t) => {
+test('noise works with random seeds', t => {
   const n1 = noise({ seed: 'random' }),
     n2 = noise({ seed: 'random' })
 

@@ -64,7 +64,7 @@ export type NoiseOptions = {
 
 export const noise = ({
   dimensions = 1,
-  seed,
+  seed = 0,
   lerp = false,
   range,
   discrete = false,
@@ -129,6 +129,6 @@ export const noise = ({
   }
 
   // base case, just the default options (and seed)
-  const sq = squirrel5(seed ?? 0)
-  return (x = 0) => sq(x)
+  const sq = squirrel5(seed)
+  return x => sq(x)
 }

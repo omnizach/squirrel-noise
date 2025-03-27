@@ -9,7 +9,7 @@
 
 export const squirrel5 =
   (seed = 0) =>
-  (position: number) => {
+  (position = 0) => {
     let mangledBits = position
     mangledBits *= 0xd2a80a3f
     mangledBits ^= mangledBits >>> 9 // this line was swapped

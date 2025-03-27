@@ -2,7 +2,7 @@ import test from 'ava'
 
 import { noiseList, randomList } from './noiseList'
 
-test('noiseList is fair', (t) => {
+test('noiseList is fair', t => {
   const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')
   const nl = noiseList(letters)
 
@@ -15,12 +15,12 @@ test('noiseList is fair', (t) => {
   t.log(counts)
 
   t.is(Object.keys(counts).length, 26)
-  Object.keys(counts).forEach((letter) =>
+  Object.keys(counts).forEach(letter =>
     t.true(counts[letter] > 900 && counts[letter] < 1100),
   )
 })
 
-test('randomList is fair', (t) => {
+test('randomList is fair', t => {
   const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')
   const nl = randomList(letters)
 
@@ -34,18 +34,18 @@ test('randomList is fair', (t) => {
   t.log(counts)
 
   t.is(Object.keys(counts).length, 26)
-  Object.keys(counts).forEach((letter) =>
+  Object.keys(counts).forEach(letter =>
     t.true(counts[letter] > 900 && counts[letter] < 1100),
   )
 })
 
-test('weights returns correct output', (t) => {
+test('weights returns correct output', t => {
   const n = noiseList(['a', 'b', 'c'], { weights: [1, 1, 2], seed: 3 })
 
   t.is(n(0), 'c')
 })
 
-test('weights uniform weights outputs uniformly', (t) => {
+test('weights uniform weights outputs uniformly', t => {
   const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')
   const nl = noiseList(letters, { weights: letters.map(() => 2), seed: 26 })
 
@@ -59,15 +59,15 @@ test('weights uniform weights outputs uniformly', (t) => {
   t.log(counts)
 
   t.is(Object.keys(counts).length, 26)
-  Object.keys(counts).forEach((letter) =>
+  Object.keys(counts).forEach(letter =>
     t.true(counts[letter] > 900 && counts[letter] < 1100),
   )
 })
 
-test('extreme weight bias', (t) => {
+test('extreme weight bias', t => {
   const letters = 'abcdefghij'.split('')
   const nl = noiseList(letters, {
-    weights: letters.map((x) => (x === 'g' ? 991 : 1)),
+    weights: letters.map(x => (x === 'g' ? 991 : 1)),
     seed: 26,
   })
 
@@ -84,7 +84,7 @@ test('extreme weight bias', (t) => {
   t.true(counts['g'] > 98000)
 })
 
-test('weights default to 1', (t) => {
+test('weights default to 1', t => {
   const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')
   const nl = noiseList(letters, { weights: [991], seed: 40 })
 
@@ -101,7 +101,7 @@ test('weights default to 1', (t) => {
   t.true(counts['a'] > 25000)
 })
 
-test('weights ignored if empty', (t) => {
+test('weights ignored if empty', t => {
   const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')
   const nl = randomList(letters, { weights: [] })
 
@@ -115,7 +115,7 @@ test('weights ignored if empty', (t) => {
   t.log(counts)
 
   t.is(Object.keys(counts).length, 26)
-  Object.keys(counts).forEach((letter) =>
+  Object.keys(counts).forEach(letter =>
     t.true(counts[letter] > 900 && counts[letter] < 1100),
   )
 })

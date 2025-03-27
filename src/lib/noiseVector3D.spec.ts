@@ -2,7 +2,7 @@ import test from 'ava'
 
 import { noiseVector3D, randomVector3D } from './noiseVector3D'
 
-test('noiseVector3D is on unit circle', (t) => {
+test('noiseVector3D is on unit circle', t => {
   const nv = noiseVector3D()
 
   for (let i = 0; i < 10000; i++) {
@@ -11,7 +11,7 @@ test('noiseVector3D is on unit circle', (t) => {
   }
 })
 
-test('randomVector3D is on unit circle', (t) => {
+test('randomVector3D is on unit circle', t => {
   const nv = randomVector3D()
 
   for (let i = 0; i < 10000; i++) {
@@ -21,7 +21,7 @@ test('randomVector3D is on unit circle', (t) => {
   }
 })
 
-test('randomVector3D averages to origin (no bias)', (t) => {
+test('randomVector3D averages to origin (no bias)', t => {
   const nv = randomVector3D()
 
   const brown: [number, number, number] = [0, 0, 0]
@@ -41,7 +41,7 @@ test('randomVector3D averages to origin (no bias)', (t) => {
   t.true(Math.abs(brown[2]) < 300)
 })
 
-test('randomVector3D axes are evenly spread', (t) => {
+test('randomVector3D axes are evenly spread', t => {
   const nv = randomVector3D()
 
   const brown: [number, number, number] = [0, 0, 0]

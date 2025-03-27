@@ -99,7 +99,8 @@
   },
   "prettier": {
     "singleQuote": true,
-    "semi": false
+    "semi": false,
+    "arrowParens": "avoid"
   },
   "nyc": {
     "extends": "@istanbuljs/nyc-config-typescript",
