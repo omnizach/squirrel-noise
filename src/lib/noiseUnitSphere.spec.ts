@@ -1,9 +1,9 @@
 import test from 'ava'
 
-import { noiseVector3D, randomVector3D } from './noiseVector3D'
+import { noiseUnitSphere, randomUnitSphere } from './noiseUnitSphere'
 
 test('noiseVector3D is on unit circle', t => {
-  const nv = noiseVector3D()
+  const nv = noiseUnitSphere()
 
   for (let i = 0; i < 10000; i++) {
     t.true(nv(i)[0] ** 2 + nv(i)[1] ** 2 + nv(i)[2] ** 2 > 0.9999)
@@ -12,7 +12,7 @@ test('noiseVector3D is on unit circle', t => {
 })
 
 test('randomVector3D is on unit circle', t => {
-  const nv = randomVector3D()
+  const nv = randomUnitSphere({ seed: 3 })
 
   for (let i = 0; i < 10000; i++) {
     const v = nv()
@@ -22,7 +22,7 @@ test('randomVector3D is on unit circle', t => {
 })
 
 test('randomVector3D averages to origin (no bias)', t => {
-  const nv = randomVector3D()
+  const nv = randomUnitSphere()
 
   const brown: [number, number, number] = [0, 0, 0]
 
@@ -42,7 +42,7 @@ test('randomVector3D averages to origin (no bias)', t => {
 })
 
 test('randomVector3D axes are evenly spread', t => {
-  const nv = randomVector3D()
+  const nv = randomUnitSphere()
 
   const brown: [number, number, number] = [0, 0, 0]
 

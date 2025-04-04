@@ -8,7 +8,7 @@ import { noise, NoiseFunction, NoiseOptions } from './noise'
 import { noiseTuple } from './noiseTuple'
 import { randomize } from './random'
 
-export const noiseVector3D = (
+export const noiseUnitSphere = (
   options?: Omit<NoiseOptions, 'range' | 'discrete'>,
 ): NoiseFunction<readonly [number, number, number]> => {
   const cylinder = noiseTuple(
@@ -24,6 +24,6 @@ export const noiseVector3D = (
   }
 }
 
-export const randomVector3D = (
+export const randomUnitSphere = (
   options?: Omit<NoiseOptions, 'range' | 'discrete' | 'dimensions'>,
-) => randomize(noiseVector3D({ ...options }))
+) => randomize(noiseUnitSphere(options))

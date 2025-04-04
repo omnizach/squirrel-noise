@@ -1,9 +1,9 @@
 import test from 'ava'
 
-import { noiseVector2D, randomVector2D } from './noiseVector2D'
+import { noiseUnitCircle, randomUnitCircle } from './noiseUnitCircle'
 
 test('noiseVector2D is on unit circle', t => {
-  const nv = noiseVector2D()
+  const nv = noiseUnitCircle()
 
   for (let i = 0; i < 10000; i++) {
     t.true(nv(i)[0] ** 2 + nv(i)[1] ** 2 > 0.9999)
@@ -12,7 +12,7 @@ test('noiseVector2D is on unit circle', t => {
 })
 
 test('randomVector2D is on unit circle', t => {
-  const nv = randomVector2D()
+  const nv = randomUnitCircle()
 
   for (let i = 0; i < 10000; i++) {
     const v = nv()
@@ -22,7 +22,7 @@ test('randomVector2D is on unit circle', t => {
 })
 
 test('randomVector2D averages to origin (no bias)', t => {
-  const nv = randomVector2D()
+  const nv = randomUnitCircle()
 
   const brown: [number, number] = [0, 0]
 
