@@ -60,6 +60,7 @@ export type NoiseOptions = {
   readonly lerp?: boolean
   readonly range?: readonly [number, number]
   readonly discrete?: boolean
+  readonly octave?: number
 }
 
 export const noise = ({
@@ -68,6 +69,7 @@ export const noise = ({
   lerp = false,
   range,
   discrete = false,
+  octave = 0,
 }: NoiseOptions = {}): NoiseFunction<number> => {
   if (seed === 'random') {
     return noise({
@@ -75,12 +77,13 @@ export const noise = ({
       lerp,
       range,
       discrete,
+      octave,
       seed: Math.random() * 0x7fffffff,
     })
   }
 
   if (range) {
-    const n = noise({ seed, dimensions, lerp }),
+    const n = noise({ seed, dimensions, lerp, octave }),
       s = scale([-0x7fffffff, 0x7fffffff], range)
 
     return discrete
@@ -89,7 +92,7 @@ export const noise = ({
   }
 
   if (lerp) {
-    const n = noise({ seed, dimensions })
+    const n = noise({ seed, dimensions, octave })
     if (dimensions === 1) {
       return (x = 0) => lerp1D(n(Math.floor(x)), n(Math.ceil(x)), x % 1)
     } else if (dimensions === 2) {
@@ -123,9 +126,14 @@ export const noise = ({
   }
 
   if (dimensions !== 1) {
-    const n = noise({ seed })
+    const n = noise({ seed, octave })
     return (x?: number, y?: number, z?: number, w?: number) =>
       n(reduceDimension[dimensions - 2](x, y, z, w))
+  }
+
+  if (octave) {
+    const n = noise({ seed })
+    return x => n(x! >> octave)
   }
 
   // base case, just the default options (and seed)

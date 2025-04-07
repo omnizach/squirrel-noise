@@ -151,3 +151,11 @@ test('noise works with random seeds', t => {
 
   t.not(n1(999), n2(999))
 })
+
+test('noise octaves are consistent for close values', t => {
+  const n = noise({ octave: 1 })
+
+  for (let i = 0; i < 100; i++) {
+    t.is(n(i * 2), n(i * 2 + 1))
+  }
+})

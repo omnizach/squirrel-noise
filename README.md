@@ -46,12 +46,6 @@ An input number that varies the noise/sequence.
 
 Default: 0
 
-### generator
-
-Makes the noise function generate a sequence. The resulting function ignores all inputs. Setting `generator: true` makes the function into the `random` variant.
-
-Default: false
-
 ### dimensions
 
 Determines how many input numbers are considered by the resulting noise function. For example:
@@ -87,3 +81,8 @@ will interpolate between the closest whole values; i.e. `n(1.5)` will be half wa
 Note: the output is not affected by this issue and will be continously with float/fractional values in the output range. If you want integer outputs, use the `discrete` option.
 
 `lerp` interpolates nearby inputs by the `dimensions` number. So, for `dimensions: 2`, `n(1.4, 2.3)` will interpolate between the points `n(1, 2)`, `n(2, 2)`, `n(1, 3)`, and `n(2, 4)`. Analygously, the containing cube of points are considered for the `dimensions: 3` case. Note: 4d interpolation is not implemented.
+
+### octave
+
+Octave allows for other smoothing options by shifting the input by `octave` bits. For example, with `octave = 1`, `n(1) = n(0)`, `n(3) = n(2)`, etc. When combined with the [lerp]
+option, this provides linear smoothing at a wider range than just whole numbers.
