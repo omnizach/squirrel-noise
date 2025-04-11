@@ -4,22 +4,13 @@ import { squirrel5 } from './squirrel5'
 
 const reduceDimension = [
   (x: number = 0, y: number = 0) => x + 198491317 * y,
-  (x: number = 0, y: number = 0, z: number = 0) =>
-    x + 198491317 * y + 6542989 * z,
-  (x: number = 0, y: number = 0, z: number = 0, w: number = 0) =>
-    x + 198491317 * y + 6542989 * z + 357239 * w,
+  (x: number = 0, y: number = 0, z: number = 0) => x + 198491317 * y + 6542989 * z,
+  (x: number = 0, y: number = 0, z: number = 0, w: number = 0) => x + 198491317 * y + 6542989 * z + 357239 * w,
 ]
 
 const lerp1D = (f0: number, f1: number, x: number) => f0 + x * (f1 - f0)
 
-const lerp2D = (
-  f00: number,
-  f01: number,
-  f10: number,
-  f11: number,
-  x: number,
-  y: number,
-) =>
+const lerp2D = (f00: number, f01: number, f10: number, f11: number, x: number, y: number) =>
   f00 * (1 - x) * (1 - y) + f01 * (1 - x) * y + f10 * x * (1 - y) + f11 * x * y
 
 const lerp3D = (
@@ -45,22 +36,19 @@ const lerp3D = (
   f111 * x * y * z
 
 const scale =
-  (
-    [yMin, yMax]: readonly [number, number],
-    [xMin, xMax]: readonly [number, number],
-  ) =>
+  ([yMin, yMax]: readonly [number, number], [xMin, xMax]: readonly [number, number]) =>
   (inputY: number) =>
     ((inputY - yMin) / (yMax - yMin)) * (xMax - xMin) + xMin
 
 export type NoiseFunction<T> = (...xs: readonly (number | undefined)[]) => T
 
 export type NoiseOptions = {
-  readonly dimensions?: 1 | 2 | 3 | 4
-  readonly seed?: number | 'random'
-  readonly lerp?: boolean
-  readonly range?: readonly [number, number]
-  readonly discrete?: boolean
-  readonly octave?: number
+  dimensions?: 1 | 2 | 3 | 4
+  seed?: number | 'random'
+  lerp?: boolean
+  range?: [number, number]
+  discrete?: boolean
+  octave?: number
 }
 
 export const noise = ({
@@ -71,6 +59,7 @@ export const noise = ({
   discrete = false,
   octave = 0,
 }: NoiseOptions = {}): NoiseFunction<number> => {
+
   if (seed === 'random') {
     return noise({
       dimensions,
@@ -78,13 +67,13 @@ export const noise = ({
       range,
       discrete,
       octave,
-      seed: Math.random() * 0x7fffffff,
+      seed: Math.random() * 0x7fff_ffff,
     })
   }
 
   if (range) {
     const n = noise({ seed, dimensions, lerp, octave }),
-      s = scale([-0x7fffffff, 0x7fffffff], range)
+      s = scale([-0x7fff_ffff, 0x7fff_ffff], range)
 
     return discrete
       ? (...xs: readonly (number | undefined)[]) => Math.floor(s(n(...xs)))
@@ -127,8 +116,7 @@ export const noise = ({
 
   if (dimensions !== 1) {
     const n = noise({ seed, octave })
-    return (x?: number, y?: number, z?: number, w?: number) =>
-      n(reduceDimension[dimensions - 2](x, y, z, w))
+    return (x?: number, y?: number, z?: number, w?: number) => n(reduceDimension[dimensions - 2](x, y, z, w))
   }
 
   if (octave) {

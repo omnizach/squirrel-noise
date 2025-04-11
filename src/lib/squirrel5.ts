@@ -7,9 +7,8 @@
  * impact that this noise function will not align with other implementations, should that be desired.
  */
 
-export const squirrel5 =
-  (seed = 0) =>
-  (position = 0) => {
+export const squirrel5 = (seed = 0) => {
+  return (position = 0) => {
     let mangledBits = position
     mangledBits *= 0xd2a80a3f
     mangledBits ^= mangledBits >>> 9 // this line was swapped
@@ -24,3 +23,4 @@ export const squirrel5 =
     mangledBits ^= mangledBits >>> 17
     return mangledBits
   }
+}
