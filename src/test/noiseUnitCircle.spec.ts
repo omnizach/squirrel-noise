@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import { noiseUnitCircle, randomUnitCircle } from './noiseUnitCircle'
+import { noiseUnitCircle, randomUnitCircle } from '../lib/noiseUnitCircle'
 
 test('noiseVector2D is on unit circle', t => {
   const nv = noiseUnitCircle()

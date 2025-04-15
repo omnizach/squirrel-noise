@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import { noise } from './noise'
+import { noise } from '../lib/noise'
 
 test('noise with no input is valid', t => {
   const n = noise()

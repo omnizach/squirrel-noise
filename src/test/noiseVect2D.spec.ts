@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import { noiseVect2D, randomVect2D } from './noiseVect2D'
+import { noiseVect2D, randomVect2D } from '../lib/noiseVect2D'
 
 test('noiseNumber is consistent', t => {
   const nn = noiseVect2D()

@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import { noiseFactory } from './noiseFactory'
+import { noiseFactory } from '../lib/noiseFactory'
 
 test('noiseFactory produces accurate output', t => {
   const nd = noiseFactory(x => new Date(new Date(2000, 0, 1).getTime() + x), {

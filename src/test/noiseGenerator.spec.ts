@@ -1,5 +1,5 @@
 import test from 'ava'
-import { noiseGenerator } from './noiseGenerator'
+import { noiseGenerator } from '../lib/noiseGenerator'
 
 test('noiseGenerator basic generator loop', t => {
   let count = 0

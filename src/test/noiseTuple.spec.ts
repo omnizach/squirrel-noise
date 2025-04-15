@@ -1,7 +1,7 @@
 import test from 'ava'
-import { noiseTuple } from './noiseTuple'
-import { noiseNumber } from './noiseNumber'
-import { noiseList } from './noiseList'
+import { noiseTuple } from '../lib/noiseTuple'
+import { noiseNumber } from '../lib/noiseNumber'
+import { noiseList } from '../lib/noiseList'
 
 test('single tuple', t => {
   const src = noiseNumber(),

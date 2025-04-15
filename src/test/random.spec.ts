@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import { random } from './random'
+import { random } from '../lib/random'
 
 test('noise generator produces sequence with no input', t => {
   const ng = random()

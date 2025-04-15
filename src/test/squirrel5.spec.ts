@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import { squirrel5 } from './squirrel5'
+import { squirrel5 } from '../lib/squirrel5'
 
 test('no-seed', t => {
   t.is(squirrel5()(0), -247101726)

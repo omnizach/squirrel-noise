@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import { noiseList, randomList } from './noiseList'
+import { noiseList, randomList } from '../lib/noiseList'
 
 test('noiseList is fair', t => {
   const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')

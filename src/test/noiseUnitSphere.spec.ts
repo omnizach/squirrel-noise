@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import { noiseUnitSphere, randomUnitSphere } from './noiseUnitSphere'
+import { noiseUnitSphere, randomUnitSphere } from '../lib/noiseUnitSphere'
 
 test('noiseVector3D is on unit circle', t => {
   const nv = noiseUnitSphere()

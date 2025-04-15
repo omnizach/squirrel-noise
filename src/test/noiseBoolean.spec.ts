@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import { noiseBoolean, randomBoolean } from './noiseBoolean'
+import { noiseBoolean, randomBoolean } from '../lib/noiseBoolean'
 
 test('noiseBoolean returns booleans consistently', t => {
   const nb = noiseBoolean({ seed: 10 })

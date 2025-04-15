@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import { noiseNumber, randomNumber } from './noiseNumber'
+import { noiseNumber, randomNumber } from '../lib/noiseNumber'
 
 test('noiseNumber is consistent', t => {
   const nn = noiseNumber()
