@@ -15,9 +15,7 @@ test('noiseList is fair', t => {
   t.log(counts)
 
   t.is(Object.keys(counts).length, 26)
-  Object.keys(counts).forEach(letter =>
-    t.true(counts[letter] > 900 && counts[letter] < 1100),
-  )
+  Object.keys(counts).forEach(letter => t.true(counts[letter] > 900 && counts[letter] < 1100))
 })
 
 test('randomList is fair', t => {
@@ -34,9 +32,7 @@ test('randomList is fair', t => {
   t.log(counts)
 
   t.is(Object.keys(counts).length, 26)
-  Object.keys(counts).forEach(letter =>
-    t.true(counts[letter] > 900 && counts[letter] < 1100),
-  )
+  Object.keys(counts).forEach(letter => t.true(counts[letter] > 900 && counts[letter] < 1100))
 })
 
 test('weights returns correct output', t => {
@@ -59,9 +55,7 @@ test('weights uniform weights outputs uniformly', t => {
   t.log(counts)
 
   t.is(Object.keys(counts).length, 26)
-  Object.keys(counts).forEach(letter =>
-    t.true(counts[letter] > 900 && counts[letter] < 1100),
-  )
+  Object.keys(counts).forEach(letter => t.true(counts[letter] > 900 && counts[letter] < 1100))
 })
 
 test('extreme weight bias', t => {
@@ -115,7 +109,5 @@ test('weights ignored if empty', t => {
   t.log(counts)
 
   t.is(Object.keys(counts).length, 26)
-  Object.keys(counts).forEach(letter =>
-    t.true(counts[letter] > 900 && counts[letter] < 1100),
-  )
+  Object.keys(counts).forEach(letter => t.true(counts[letter] > 900 && counts[letter] < 1100))
 })

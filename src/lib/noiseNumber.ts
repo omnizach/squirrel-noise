@@ -3,5 +3,4 @@ import { randomize } from './random'
 
 export const noiseNumber = noise
 
-export const randomNumber = (options?: NoiseOptions) =>
-  randomize(noiseNumber(options))
+export const randomNumber = (options?: NoiseOptions) => randomize(noiseNumber(options))

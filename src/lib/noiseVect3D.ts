@@ -7,11 +7,7 @@ export interface NoiseVect3DOptions {
   range?: [[number, number], [number, number], [number, number]]
 }
 
-export const noiseVect3D = ({
-  range,
-  seed,
-  ...options
-}: Omit<NoiseOptions, 'range'> & NoiseVect3DOptions = {}) => {
+export const noiseVect3D = ({ range, seed, ...options }: Omit<NoiseOptions, 'range'> & NoiseVect3DOptions = {}) => {
   return noiseTuple<number, number, number>(
     noiseNumber({ range: range?.[0], ...options }),
     noiseNumber({
@@ -27,6 +23,5 @@ export const noiseVect3D = ({
   )
 }
 
-export const randomVect3D = (
-  options?: Omit<NoiseOptions, 'range'> & NoiseVect3DOptions,
-) => randomize(noiseVect3D(options))
+export const randomVect3D = (options?: Omit<NoiseOptions, 'range'> & NoiseVect3DOptions) =>
+  randomize(noiseVect3D(options))

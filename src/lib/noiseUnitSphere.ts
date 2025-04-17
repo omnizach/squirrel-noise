@@ -24,6 +24,5 @@ export const noiseUnitSphere = (
   }
 }
 
-export const randomUnitSphere = (
-  options?: Omit<NoiseOptions, 'range' | 'discrete' | 'dimensions'>,
-) => randomize(noiseUnitSphere(options))
+export const randomUnitSphere = (options?: Omit<NoiseOptions, 'range' | 'discrete' | 'dimensions'>) =>
+  randomize(noiseUnitSphere(options))

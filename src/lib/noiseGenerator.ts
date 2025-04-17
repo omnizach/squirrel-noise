@@ -8,8 +8,7 @@ export interface NoiseGeneratorOptions {
 export function* noiseGenerator({
   length = Infinity,
   ...options
-}: Omit<NoiseOptions, 'dimensions'> &
-  NoiseGeneratorOptions = {}): Generator<number> {
+}: Omit<NoiseOptions, 'dimensions'> & NoiseGeneratorOptions = {}): Generator<number> {
   const n = noiseNumber(options)
 
   let i = 0

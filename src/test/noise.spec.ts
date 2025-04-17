@@ -14,11 +14,7 @@ test('noise 1d lerp is smooth between points', t => {
   t.is(n(), n(0))
 
   for (let i = 0; i < 10; i++) {
-    t.true(
-      n(i) < n(i + 1)
-        ? n(i) < n(i + 0.5) && n(i + 0.5) < n(i + 1)
-        : n(i) > n(i + 0.5) && n(i + 0.5) > n(i + 1),
-    )
+    t.true(n(i) < n(i + 1) ? n(i) < n(i + 0.5) && n(i + 0.5) < n(i + 1) : n(i) > n(i + 0.5) && n(i + 0.5) > n(i + 1))
   }
 })
 
@@ -55,12 +51,7 @@ test('noise lerp2d is smooth', t => {
 
   for (let i = 1; i < 100; i++) {
     for (let j = 1; j < 100; j++) {
-      t.true(
-        Math.abs(
-          (n(i, j) + n(i + 1, j) + n(i, j + 1) + n(i + 1, j + 1)) / 4 -
-            n(i + 0.5, j + 0.5),
-        ) < 0.0001,
-      )
+      t.true(Math.abs((n(i, j) + n(i + 1, j) + n(i, j + 1) + n(i + 1, j + 1)) / 4 - n(i + 0.5, j + 0.5)) < 0.0001)
     }
   }
 })

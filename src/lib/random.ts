@@ -7,9 +7,7 @@ export type RandomFunction<T> = () => T
  * @param noiseFunc
  * @returns
  */
-export const randomize: <T>(
-  noiseFunc: NoiseFunction<T>,
-) => RandomFunction<T> = <T>(noiseFunc: NoiseFunction<T>) => {
+export const randomize: <T>(noiseFunc: NoiseFunction<T>) => RandomFunction<T> = <T>(noiseFunc: NoiseFunction<T>) => {
   let x = 0
   return () => noiseFunc(++x)
 }
@@ -19,5 +17,4 @@ export const randomize: <T>(
  * @param options
  * @returns
  */
-export const random = (options?: Omit<NoiseOptions, 'dimensions' | 'lerp'>) =>
-  randomize(noise(options))
+export const random = (options?: Omit<NoiseOptions, 'dimensions' | 'lerp'>) => randomize(noise(options))

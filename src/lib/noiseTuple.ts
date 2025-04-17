@@ -1,10 +1,7 @@
 import { NoiseFunction } from './noise'
 
 export function noiseTuple<T1>(n1: NoiseFunction<T1>): NoiseFunction<[T1]>
-export function noiseTuple<T1, T2>(
-  n1: NoiseFunction<T1>,
-  n2: NoiseFunction<T2>,
-): NoiseFunction<[T1, T2]>
+export function noiseTuple<T1, T2>(n1: NoiseFunction<T1>, n2: NoiseFunction<T2>): NoiseFunction<[T1, T2]>
 export function noiseTuple<T1, T2, T3>(
   n1: NoiseFunction<T1>,
   n2: NoiseFunction<T2>,

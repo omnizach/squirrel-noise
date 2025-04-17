@@ -40,16 +40,8 @@ test('noiseNumber default range', t => {
 
   for (let i = 0; i < 100000; i++) {
     const [x, y, z] = rn()
-    min = [
-      x < min[0] ? x : min[0],
-      y < min[1] ? y : min[1],
-      z < min[2] ? z : min[2],
-    ]
-    max = [
-      x > max[0] ? x : max[0],
-      y > max[1] ? y : max[1],
-      z > max[2] ? z : max[2],
-    ]
+    min = [x < min[0] ? x : min[0], y < min[1] ? y : min[1], z < min[2] ? z : min[2]]
+    max = [x > max[0] ? x : max[0], y > max[1] ? y : max[1], z > max[2] ? z : max[2]]
   }
 
   t.log(min, max)

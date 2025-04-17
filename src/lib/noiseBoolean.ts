@@ -20,6 +20,4 @@ import { randomize } from './random'
 export const noiseBoolean = (options?: Omit<NoiseOptions, 'range'>) =>
   noiseFactory<boolean>((x: number) => !(x & 1), options)
 
-export const randomBoolean = (
-  options?: Omit<NoiseOptions, 'range' | 'dimensions'>,
-) => randomize(noiseBoolean(options))
+export const randomBoolean = (options?: Omit<NoiseOptions, 'range' | 'dimensions'>) => randomize(noiseBoolean(options))
