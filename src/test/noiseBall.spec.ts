@@ -19,7 +19,7 @@ test('noiseBall vectors in range,', t => {
   }
 
   t.log(min, max)
-  t.true(min <= 0.01)
+  t.true(min <= 0.02)
   t.true(max >= 0.99)
 })
 

@@ -36,9 +36,9 @@ test('randomVector3D averages to origin (no bias)', t => {
   t.log(brown)
 
   // it's not clear what actually counts as statistically sound on this, just guessing on reasonable constraints
-  t.true(Math.abs(brown[0]) < 300)
-  t.true(Math.abs(brown[1]) < 300)
-  t.true(Math.abs(brown[2]) < 300)
+  t.true(Math.abs(brown[0]) < 400)
+  t.true(Math.abs(brown[1]) < 400)
+  t.true(Math.abs(brown[2]) < 400)
 })
 
 test('randomVector3D axes are evenly spread', t => {

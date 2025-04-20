@@ -45,14 +45,24 @@ const seedNoise = squirrel5(0x5eed5)
 let seedCounter = 0
 
 export const swizzle = (s: Seed = 'generate', x: number = 0): Seed => {
-  if (s === 'random' || s === 'generate') {
+  if (typeof s === 'string') {
     return s
   }
 
   return seedNoise(s + x)
 }
 
-export type Seed = number | 'random' | 'generate'
+export const hashCode = (str: string) => [...str].reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0)
+
+const trace = (): string => {
+  try {
+    throw Error('')
+  } catch (e) {
+    return (e as Error).stack!
+  }
+}
+
+export type Seed = number | 'random' | 'generate' | 'trace'
 
 export type NoiseFunction<T> = (...xs: readonly (number | undefined)[]) => T
 
@@ -68,15 +78,20 @@ export type NoiseOptions = {
 
 export const noise = ({
   dimensions = 1,
-  seed = 'generate',
+  seed = 'trace',
   lerp = false,
   range,
   discrete = false,
   octave = 0,
   onSeeding,
 }: NoiseOptions = {}): NoiseFunction<number> => {
-  if (seed === 'random' || seed == 'generate') {
-    const s = seed === 'random' ? (Math.random() * 0x7fff_ffff) | 0 : seedNoise(seedCounter++)
+  if (typeof seed === 'string') {
+    const s =
+      seed === 'random'
+        ? (Math.random() * 0x7fff_ffff) | 0
+        : seed === 'generate'
+          ? seedNoise(seedCounter++)
+          : seedNoise(hashCode(trace()))
     onSeeding?.(s)
     return noise({
       dimensions,

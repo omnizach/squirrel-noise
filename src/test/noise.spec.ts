@@ -157,8 +157,21 @@ test('noise onSeeding', t => {
     onSeeding: s => {
       seed = s
     },
+    seed: 'generate',
   })
 
   t.true(n(9) < 0xffff_ffff)
-  t.deepEqual(seed, 1472717027)
+  t.deepEqual(seed, 666346043)
+})
+
+test('noise trace seeding', t => {
+  const n1 = noise({ seed: 'trace' }),
+    n2 = noise({ seed: 'trace' })
+
+  t.notDeepEqual(n1(3), n2(3))
+
+  for (let i = 0; i < 2; i++) {
+    const n = noise({ seed: 'trace' })
+    t.deepEqual(n(5), -1700444078)
+  }
 })
