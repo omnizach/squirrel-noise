@@ -40,33 +40,51 @@ const scale =
   (inputY: number) =>
     ((inputY - yMin) / (yMax - yMin)) * (xMax - xMin) + xMin
 
+const seedNoise = squirrel5(0x5eed5)
+
+let seedCounter = 0
+
+export const swizzle = (s: Seed = 'generate', x: number = 0): Seed => {
+  if (s === 'random' || s === 'generate') {
+    return s
+  }
+
+  return seedNoise(s + x)
+}
+
+export type Seed = number | 'random' | 'generate'
+
 export type NoiseFunction<T> = (...xs: readonly (number | undefined)[]) => T
 
 export type NoiseOptions = {
   readonly dimensions?: 1 | 2 | 3 | 4
-  readonly seed?: number | 'random'
+  readonly seed?: Seed
   readonly lerp?: boolean
   readonly range?: readonly [number, number]
   readonly discrete?: boolean
   readonly octave?: number
+  readonly onSeeding?: (value: number) => void
 }
 
 export const noise = ({
   dimensions = 1,
-  seed = 0,
+  seed = 'generate',
   lerp = false,
   range,
   discrete = false,
   octave = 0,
+  onSeeding,
 }: NoiseOptions = {}): NoiseFunction<number> => {
-  if (seed === 'random') {
+  if (seed === 'random' || seed == 'generate') {
+    const s = seed === 'random' ? (Math.random() * 0x7fff_ffff) | 0 : seedNoise(seedCounter++)
+    onSeeding?.(s)
     return noise({
       dimensions,
       lerp,
       range,
       discrete,
       octave,
-      seed: Math.random() * 0x7fffffff,
+      seed: s,
     })
   }
 

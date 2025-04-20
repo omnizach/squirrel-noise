@@ -4,7 +4,7 @@
  * https://math.stackexchange.com/a/1586015
  */
 
-import { noise, NoiseFunction, NoiseOptions } from './noise'
+import { noise, NoiseFunction, NoiseOptions, swizzle } from './noise'
 import { noiseTuple } from './noiseTuple'
 import { randomize } from './random'
 
@@ -13,7 +13,7 @@ export const noiseUnitSphere = (
 ): NoiseFunction<readonly [number, number, number]> => {
   const cylinder = noiseTuple(
     noise({ ...options, range: [0, Math.PI * 2] }),
-    noise({ ...options, seed: ~(options?.seed || 0), range: [-1, 1] }),
+    noise({ ...options, seed: swizzle(options?.seed), range: [-1, 1] }),
   )
 
   return (...xs: readonly (number | undefined)[]) => {

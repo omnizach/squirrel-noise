@@ -1,4 +1,4 @@
-import { NoiseFunction, NoiseOptions } from './noise'
+import { NoiseFunction, NoiseOptions, swizzle } from './noise'
 import { noiseFactory } from './noiseFactory'
 import { noiseNumber } from './noiseNumber'
 
@@ -18,7 +18,7 @@ export const noiseNormalPair = ({ mean, stddev, clamp, ...options }: NoiseNormal
     σ = stddev ?? 0,
     θ = noiseNumber({ ...options, range: [0, Math.PI * 2] }),
     r = noiseFactory(x => σ * Math.sqrt(-2 * Math.log(x)), {
-      seed: Number.isFinite(options.seed) ? ~options.seed! : options.seed,
+      seed: swizzle(options.seed),
     }),
     c = clampRange(clamp ?? [0, 0])
 

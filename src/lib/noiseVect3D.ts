@@ -1,4 +1,4 @@
-import { NoiseOptions } from './noise'
+import { NoiseOptions, swizzle } from './noise'
 import { noiseNumber } from './noiseNumber'
 import { noiseTuple } from './noiseTuple'
 import { randomize } from './random'
@@ -13,12 +13,12 @@ export const noiseVect3D = ({ range, seed, ...options }: Omit<NoiseOptions, 'ran
     noiseNumber({
       range: range?.[1],
       ...options,
-      seed: seed === 'random' ? seed : ~(seed ?? 0),
+      seed: swizzle(seed),
     }),
     noiseNumber({
       range: range?.[2],
       ...options,
-      seed: seed === 'random' ? seed : (seed ?? 0) ^ 0xa5a55a5a,
+      seed: swizzle(seed, 1),
     }),
   )
 }

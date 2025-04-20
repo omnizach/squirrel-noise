@@ -1,4 +1,4 @@
-import { NoiseFunction, NoiseOptions } from './noise'
+import { NoiseFunction, NoiseOptions, swizzle } from './noise'
 import { noiseNumber } from './noiseNumber'
 import { noiseUnitSphere } from './noiseUnitSphere'
 import { randomize } from './random'
@@ -16,7 +16,7 @@ export const noiseBall = ({
   const unitSphere = noiseUnitSphere(),
     radius3 = noiseNumber({
       range: [0, range ** 3],
-      seed: ~(options?.seed || 0),
+      seed: swizzle(options.seed),
     })
 
   return (...xs: (number | undefined)[]) => {

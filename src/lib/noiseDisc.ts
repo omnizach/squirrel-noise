@@ -1,4 +1,4 @@
-import { NoiseFunction, NoiseOptions } from './noise'
+import { NoiseFunction, NoiseOptions, swizzle } from './noise'
 import { noiseNumber } from './noiseNumber'
 import { noiseUnitCircle } from './noiseUnitCircle'
 import { randomize } from './random'
@@ -12,7 +12,7 @@ export const noiseDisc = ({ range = [0, 1], ...options }: NoiseOptions = {}): No
   const unitCircle = noiseUnitCircle(),
     radius2 = noiseNumber({
       range: [range[0] ** 2, range[1] ** 2],
-      seed: ~(options?.seed || 0),
+      seed: swizzle(options.seed),
     })
 
   return (...xs: (number | undefined)[]) => {

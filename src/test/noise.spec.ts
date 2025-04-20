@@ -150,3 +150,15 @@ test('noise octaves are consistent for close values', t => {
     t.is(n(i * 2), n(i * 2 + 1))
   }
 })
+
+test('noise onSeeding', t => {
+  let seed = 0
+  const n = noise({
+    onSeeding: s => {
+      seed = s
+    },
+  })
+
+  t.true(n(9) < 0xffff_ffff)
+  t.deepEqual(seed, 1472717027)
+})
