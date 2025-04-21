@@ -37,3 +37,14 @@ test('randomVector2D averages to origin (no bias)', t => {
   t.true(Math.abs(brown[0]) < 500)
   t.true(Math.abs(brown[1]) < 500)
 })
+
+test('noiseUnitCircle spread', t => {
+  const n = noiseUnitCircle(),
+    [xMean, yMean] = [...Array(10000).keys()]
+      .map(i => n(i))
+      .reduce(([px, py], [cx, cy]) => [px + cx, py + cy], [0, 0])
+      .map(t => Math.abs(t / 10000))
+
+  t.true(xMean < 0.1)
+  t.true(yMean < 0.1)
+})

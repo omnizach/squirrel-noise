@@ -9,8 +9,9 @@ import { randomize } from './random'
  * @returns
  */
 export const noiseDisc = ({ range = [0, 1], ...options }: NoiseOptions = {}): NoiseFunction<[number, number]> => {
-  const unitCircle = noiseUnitCircle(),
+  const unitCircle = noiseUnitCircle({ ...options }),
     radius2 = noiseNumber({
+      ...options,
       range: [range[0] ** 2, range[1] ** 2],
       seed: swizzle(options.seed),
     })
