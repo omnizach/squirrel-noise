@@ -15,10 +15,12 @@ export const noiseNormalPair = ({ mean, stddev, clamp, ...options }: NoiseNormal
   [number, number]
 > => {
   const μ = mean ?? 0,
-    σ = stddev ?? 0,
+    σ = stddev ?? 1,
     θ = noiseNumber({ ...options, range: [0, Math.PI * 2] }),
     r = noiseFactory(x => σ * Math.sqrt(-2 * Math.log(x)), {
+      ...options,
       seed: swizzle(options.seed),
+      range: [0, 1],
     }),
     c = clampRange(clamp ?? [0, 0])
 
