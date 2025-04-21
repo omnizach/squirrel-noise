@@ -24,7 +24,7 @@ test('noise range is valid', t => {
     max = r > max ? r : max
   }
 
-  t.log(min, max)
+  //t.log(min, max)
 
   t.true(min < 0.01)
   t.true(max > 9.99)
@@ -39,7 +39,7 @@ test('noise discrete range is indexable and fair', t => {
     counts[ng() + 2]++
   }
 
-  t.log(counts)
+  //t.log(counts)
 
   t.true(counts.reduce((p, c) => (p < c ? p : c), Infinity) > 9500)
   t.true(counts.reduce((p, c) => (p > c ? p : c), -Infinity) < 10500)

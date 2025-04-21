@@ -30,6 +30,6 @@ test('randomBoolean is fair', t => {
     }
   }
 
-  t.log(trueCount)
+  //t.log(trueCount)
   t.true(trueCount > 499000 && trueCount < 501000)
 })

@@ -17,7 +17,7 @@ test('noiseDisc with defaults', t => {
     max = v[1] > max ? v[1] : max
   }
 
-  t.log(min, max)
+  //t.log(min, max)
   t.true(min <= 0.01)
   t.true(max >= 0.99)
 })
@@ -39,7 +39,7 @@ test('noiseDisc vectors in range,', t => {
     t.true(d >= 1)
   }
 
-  t.log(min, max)
+  //t.log(min, max)
   t.true(min <= 1.01)
   t.true(max >= 1.99)
 })
@@ -56,7 +56,7 @@ test('noiseDisc uniform', t => {
     ds[b]++
   }
 
-  t.log(ds)
+  //t.log(ds)
 
   ds.forEach(d => {
     t.true(d > 9000)

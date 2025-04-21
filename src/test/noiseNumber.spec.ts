@@ -25,7 +25,7 @@ test('noiseNumber default range', t => {
     max = r > max ? r : max
   }
 
-  t.log(min, max)
+  //t.log(min, max)
 
   t.true(min < -0x77ffffff, 'min is close to zero')
   t.true(max > 0x77ffffff, 'max is close to 0x7fffffff')

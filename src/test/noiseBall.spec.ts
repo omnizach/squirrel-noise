@@ -18,7 +18,7 @@ test('noiseBall vectors in range,', t => {
     t.true(d <= 1)
   }
 
-  t.log(min, max)
+  //t.log(min, max)
   t.true(min <= 0.02)
   t.true(max >= 0.99)
 })
@@ -35,7 +35,7 @@ test('noiseBall uniform', t => {
     ds[b]++
   }
 
-  t.log(ds)
+  //t.log(ds)
 
   ds.forEach(d => {
     t.true(d > 9000)

@@ -17,6 +17,6 @@ test('noiseGenerator basic generator loop', t => {
 test('noiseGenerator materializes with finite length', t => {
   const ns = [...noiseGenerator({ length: 50, range: [0, 10], discrete: true })]
 
-  t.log(ns)
+  //t.log(ns)
   t.is(ns.length, 50)
 })

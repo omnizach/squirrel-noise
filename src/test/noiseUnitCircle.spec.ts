@@ -32,7 +32,7 @@ test('randomVector2D averages to origin (no bias)', t => {
     brown[1] += v[1]
   }
 
-  t.log(brown)
+  //t.log(brown)
 
   t.true(Math.abs(brown[0]) < 500)
   t.true(Math.abs(brown[1]) < 500)

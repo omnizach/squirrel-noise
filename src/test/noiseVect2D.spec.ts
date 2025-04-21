@@ -43,7 +43,7 @@ test('randomNumber range', t => {
     max = [x > max[0] ? x : max[0], y > max[1] ? y : max[1]]
   }
 
-  t.log(min, max)
+  //t.log(min, max)
 
   t.true(min[0] < -990, 'min is close to range start')
   t.true(min[1] < -990000, 'min is close to range start')
