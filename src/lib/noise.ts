@@ -59,7 +59,6 @@ export const noise = ({
   discrete = false,
   octave = 0,
 }: NoiseOptions = {}): NoiseFunction<number> => {
-
   if (seed === 'random') {
     return noise({
       dimensions,

@@ -57,7 +57,7 @@ interface NoiseBuilderFluent<TIn extends InputArgs, TOut> {
   octave(value: number): NoiseBuilderFluentResult<TIn, TOut>
   discrete(value: boolean): NoiseBuilderFluentResult<TIn, TOut>
   output<TOutNext>(value: (x: number) => TOutNext): NoiseBuilderFluentFinal<TIn, TOutNext>
-  //tuple(): NoiseBuilderTupleFluent<TIn, []>
+  //tuple(): NoiseBuilderTuple<TIn, []>
 }
 
 type NoiseBuilderInputResult<TIn extends InputArgs, TOut> = NoiseBuilderFluent<TIn, TOut> &
@@ -71,9 +71,13 @@ interface NoiseBuilderInputFluent<TIn extends InputArgs, TOut> {
   fromIncrement(start: number): NoiseBuilderFluent<never, TOut>
 }
 
+// TODO: add interface to Tuple class
+/*
 interface NoiseBuilderTupleFluent<TIn extends InputArgs, TOuts extends TupleOutput> {
   element<TOutNext>(nb: NoiseBuilder<TIn, TOutNext>): NoiseBuilderTuple<TIn, [...TOuts, TOutNext]>
+  output<TOut>(fn: (t: TOuts) => TOut): NoiseBuilderFluentFinal<TIn, TOut>
 }
+*/
 
 class NoiseBuilder<TIn extends InputArgs, TOut>
   implements
@@ -189,6 +193,7 @@ class NoiseBuilder<TIn extends InputArgs, TOut>
     return this.input(() => i++)
   }
 
+  // TODO: restrict the response to the Final interface, but this will mess with tuple
   output(): NoiseOutput<TOut>
   output<T>(fn: NoiseOutput<T>): NoiseBuilder<TIn, T>
   output<T>(fn?: NoiseOutput<T>): NoiseOutput<TOut> | NoiseBuilder<TIn, T> {
@@ -363,7 +368,9 @@ class NoiseBuilderTuple<TIn extends InputArgs, TOuts extends TupleOutput> {
     private child: NoiseBuilder<TIn, TOuts>,
   ) {}
 
-  element<TOutNext>(nb: NoiseBuilder<TIn, TOutNext> | ((parent: NoiseBuilder<TIn, unknown>) => NoiseBuilder<TIn, TOutNext>)): NoiseBuilderTuple<TIn, [...TOuts, TOutNext]> {
+  element<TOutNext>(
+    nb: NoiseBuilder<TIn, TOutNext> | ((parent: NoiseBuilder<TIn, unknown>) => NoiseBuilder<TIn, TOutNext>),
+  ): NoiseBuilderTuple<TIn, [...TOuts, TOutNext]> {
     const n = typeof nb === 'function' ? nb(this.parent) : nb,
       f = n.output(),
       c = this.child.output()
@@ -388,11 +395,14 @@ class NoiseBuilderTuple<TIn extends InputArgs, TOuts extends TupleOutput> {
   }
 }
 
+// TODO: return this as the appropriate interface, not the raw class
 export const noise = () => new NoiseBuilder({ input: (x: number) => x, output: (x: number) => x })
 
-const nt = NoiseBuilderTuple.create(noise())
+/* working example of tuple in action
+const nt = noise().tuple()
   .element(noise())
   .element(noise().output(x => !(x & 1)))
   .element(noise().output(x => x.toString()))
   .output(([a, b, c]) => b)
   .func()
+//*/

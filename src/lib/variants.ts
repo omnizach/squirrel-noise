@@ -1,3 +1,4 @@
+/*
 import { noise, NoiseFunction } from './fluent'
 import { NoiseOptions } from './noise'
 import { noiseOutput } from './noiseOutput'
@@ -40,3 +41,4 @@ export const noiseUnitSphere = (options?: NoiseOptions): NoiseFunction<number, [
       return [r * Math.cos(θ), r * Math.sin(θ), z] as [number, number, number]
     },
   )
+  */

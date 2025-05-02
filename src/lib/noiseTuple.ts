@@ -1,6 +1,6 @@
 /* eslint @typescript-eslint/no-explicit-any: 0 */
 /* eslint @typescript-eslint/no-unused-vars: 0 */
-
+/*
 import { NoiseFunction, NoiseFunctionWithProps } from './fluent'
 
 const SEED_XOR = [0, -1, 0xa5a5_5a5a, 0x5a5a_a5a5]
@@ -51,3 +51,4 @@ export function noiseTupleBuilder<TIn>(
 }
 
 export const noiseTuple = noiseTupleBuilder
+*/

@@ -1,6 +1,6 @@
 /* eslint @typescript-eslint/no-explicit-any: 0 */
 /* eslint @typescript-eslint/no-unused-vars: 0 */
-
+/*
 import { noise, NoiseBuilderOptions, NoiseFunctionWithProps } from './fluent'
 
 export interface NoiseListOptions<TIn, TOut> extends Omit<NoiseBuilderOptions<TIn, TOut>, 'output'> {
@@ -66,3 +66,4 @@ const noiseListBuilder = <TIn, TOut>({
 }
 
 export const noiseList = <T>(items: T[]) => noiseListBuilder({ items, input: (x: number) => x })
+*/

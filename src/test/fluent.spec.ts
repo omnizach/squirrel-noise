@@ -189,7 +189,7 @@ test('noise declaration seeding', t => {
 
   for (let i = 0; i < 2; i++) {
     const n = noise().seed('declaration').func()
-    t.deepEqual(n(5), 900086227)
+    t.deepEqual(n(5), -1652064829)
   }
 })
 

@@ -1,6 +1,6 @@
 /* eslint @typescript-eslint/no-explicit-any: 0 */
 /* eslint @typescript-eslint/no-unused-vars: 0 */
-
+/*
 import { NoiseFunction } from './fluent'
 
 const noiseOutputBuilder = <TIn, TMid, TOut>(
@@ -30,3 +30,4 @@ const noiseOutputBuilder = <TIn, TMid, TOut>(
 }
 
 export const noiseOutput = noiseOutputBuilder
+*/
