@@ -1,6 +1,3 @@
 export * from './lib/squirrel5'
 export * from './lib/squirrel3'
-//export * from './lib/noiseList'
-//export * from './lib/noiseOutput'
-//export * from './lib/noiseTuple'
-//export * from './lib/variants'
+export * from './lib/fluent'

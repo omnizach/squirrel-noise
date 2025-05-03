@@ -9,7 +9,12 @@ test('noise with no input is valid', t => {
 })
 
 test('noise 1d lerp is smooth between points', t => {
-  const n = noise().lerp(1).range([0, 10]).func()
+  const nb = noise().lerp(1).range([0, 10]),
+    n = nb.func()
+
+  t.deepEqual(nb.lerp(), 1)
+  t.deepEqual(noise().lerp(), false)
+  t.deepEqual(noise().lerp(false).lerp(), false)
 
   t.is(n(), n(0))
 
@@ -25,6 +30,7 @@ test('noise works for 2d input', t => {
   t.is(nf.dimensions(), 2)
   t.is(n(), n(0, 0))
   t.is(n(2222), n(2222, 0))
+  t.deepEqual(noise().dimensions(), 1)
 
   for (let i = 1; i < 100; i++) {
     for (let j = 1; j < 100; j++) {
@@ -163,7 +169,11 @@ test('noise works with random seeds', t => {
 })
 
 test('noise octaves are consistent for close values', t => {
-  const n = noise().octave(1).func()
+  const nb = noise().octave(1),
+    n = nb.func()
+
+  t.deepEqual(nb.octave(), 1)
+  t.deepEqual(noise().octave(), 0)
 
   for (let i = 0; i < 100; i++) {
     t.is(n(i * 2), n(i * 2 + 1))
@@ -172,13 +182,14 @@ test('noise octaves are consistent for close values', t => {
 
 test('noise onSeeding', t => {
   let seed = 0
-  const n = noise()
-    .seed('generate')
-    .onSeeding(s => (seed = s))
-    .func()
+  const cb = (s: number) => (seed = s),
+    nb = noise().seed('generate').onSeeding(cb),
+    n = nb.func()
 
   t.true(n(9) < 0xffff_ffff)
   t.deepEqual(seed, 666346043)
+
+  t.is(nb.onSeeding(), cb)
 })
 
 test.skip('noise declaration seeding', t => {
@@ -189,8 +200,10 @@ test.skip('noise declaration seeding', t => {
 
   for (let i = 0; i < 2; i++) {
     const n = noise().seed('declaration').func()
-    t.deepEqual(n(5), -476281330)
+    t.deepEqual(n(5), 811316781)
   }
+
+  t.is(noise().seed(), 'declaration')
 })
 
 test('noise input', t => {
@@ -217,7 +230,12 @@ test('noise output', t => {
 })
 
 test('noise discrete range', t => {
-  const n = noise().range([0, 10]).discrete(true).func()
+  const nb = noise().range([0, 10]).discrete(true),
+    n = nb.func()
+
+  t.deepEqual(nb.discrete(), true)
+  t.deepEqual(noise().discrete(), false)
+  t.deepEqual(noise().discrete(false).discrete(), false)
 
   const y = [...Array(10).keys()].map(() => 0)
 
@@ -241,7 +259,8 @@ test('noise generator produces sequence with no input', t => {
 })
 
 test('noise range is valid', t => {
-  const ng = noise().fromIncrement().range([0, 10]).func()
+  const nb = noise().fromIncrement().range([0, 10]),
+    ng = nb.func()
 
   let min = 10,
     max = 0
@@ -256,6 +275,9 @@ test('noise range is valid', t => {
 
   t.true(min < 0.01)
   t.true(max > 9.99)
+
+  t.deepEqual(nb.range(), [0, 10])
+  t.deepEqual(noise().range(), [-0x7fff_ffff, 0x7fff_ffff])
 })
 
 test('noise discrete range is indexable and fair', t => {
@@ -320,4 +342,18 @@ test('noiseGenerator materializes with finite length', t => {
 
   //t.log(ns)
   t.is(ns.length, 50)
+})
+
+test('clone', t => {
+  const n = noise().lerp(2),
+    n2 = n.clone()
+
+  t.deepEqual(n.lerp(), n2.lerp())
+})
+
+test('fromString', t => {
+  const n = noise().fromString().func()
+
+  t.deepEqual(n('test string'), n('test string'))
+  t.notDeepEqual(n('test string'), n('not test string'))
 })

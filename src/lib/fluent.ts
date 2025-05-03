@@ -26,6 +26,8 @@ interface NoiseBuilderOptions<TIn extends InputArgs, TOut> {
   discrete?: boolean
 }
 
+//#region NoiseBuilder Interfaces
+
 interface NoiseBuilderProps<TIn extends InputArgs, TOut> {
   input(): (...x: TIn) => number
   output(): NoiseOutput<TOut>
@@ -64,14 +66,23 @@ interface NoiseBuilderOutputs<TIn extends InputArgs, TOut> {
   output<TOutNext>(value: (x: number) => TOutNext): NoiseBuilderFluentFinal<TIn, TOutNext>
   tuple(): NoiseBuilderTuple<TIn, [], TOut>
   asBoolean(): NoiseBuilder<TIn, boolean>
-  asNumber(): NoiseBuilder<TIn, number>
+  asNumber(fn?: ((x: number) => number) | [number, number]): NoiseBuilder<TIn, number>
   asVect2D(range?: [[number, number] | undefined, [number, number] | undefined]): NoiseBuilder<TIn, [number, number]>
   asVect3D(
     range?: [[number, number] | undefined, [number, number] | undefined, [number, number] | undefined],
   ): NoiseBuilder<TIn, [number, number, number]>
+  asCircle(radius?: number, angleRange?: [number, number]): NoiseBuilder<TIn, [number, number]>
+  asSphere(radius?: number): NoiseBuilder<TIn, [number, number, number]>
+  asDisc(radius?: [number, number] | number, angleRange?: [number, number]): NoiseBuilder<TIn, [number, number]>
+  asBall(radius: number | [number, number]): NoiseBuilder<TIn, [number, number, number]>
+  asList<T>(items: T[], weights?: number[]): NoiseBuilder<TIn, T>
+  asGuassian(mean?: number, stdev?: number, clamp?: [number, number]): NoiseBuilder<TIn, [number, number]>
+  asPoisson(lambda?: number, clamp?: [number, number]): NoiseBuilder<TIn, number>
+  asDice(ds?: number | number[]): NoiseBuilder<TIn, number>
 }
 
 type NoiseBuilderInputResult<TIn extends InputArgs, TOut> = NoiseBuilderFluent<TIn, TOut> &
+  NoiseBuilderOutputs<TIn, TOut> &
   NoiseBuilderProps<TIn, TOut> &
   NoiseBuilderExecution<TIn, TOut>
 
@@ -97,6 +108,8 @@ interface NoiseBuilderTupleFluent<TIn extends InputArgs, TOuts extends TupleOutp
   output<TOut>(fn: (t: TOuts) => TOut): NoiseBuilderFluentFinal<TIn, TOut>
 }
 */
+
+//#endregion
 
 class NoiseBuilder<TIn extends InputArgs, TOut>
   implements
@@ -244,8 +257,8 @@ class NoiseBuilder<TIn extends InputArgs, TOut>
     return this.output(x => !(x & 1))
   }
 
-  asNumber(): NoiseBuilder<TIn, number> {
-    return this.output(x => x)
+  asNumber(fn: ((x: number) => number) | [number, number] = x => x): NoiseBuilder<TIn, number> {
+    return typeof fn === 'function' ? this.output(fn) : this.range(fn).output(x => x)
   }
 
   asVect2D(
@@ -265,12 +278,136 @@ class NoiseBuilder<TIn extends InputArgs, TOut>
       undefined,
     ],
   ): NoiseBuilder<TIn, [number, number, number]> {
-    return this.output(x => x)
+    return this.asNumber()
       .tuple()
       .element(n => n.range(rx ?? this.range()))
       .element(n => n.range(ry ?? this.range()))
       .element(n => n.range(rz ?? this.range()))
       .output()
+  }
+
+  asCircle(radius: number = 1, angleRange: [number, number] = [0, 2 * Math.PI]): NoiseBuilder<TIn, [number, number]> {
+    return this.range(angleRange).output(a => [radius * Math.cos(a), radius * Math.sin(a)])
+  }
+
+  asSphere(radius: number = 1): NoiseBuilder<TIn, [number, number, number]> {
+    return this.asNumber()
+      .tuple()
+      .element(n => n.range([0, 2 * Math.PI]))
+      .element(n => n.range([-radius, radius]).output(z => Math.sqrt(1 - z ** 2)))
+      .output(([θ, r]) => [r * Math.cos(θ), r * Math.sin(θ), r])
+  }
+
+  asDisc(
+    radius: [number, number] | number = [0, 1],
+    angleRange: [number, number] = [0, 2 * Math.PI],
+  ): NoiseBuilder<TIn, [number, number]> {
+    return this.asNumber()
+      .tuple()
+      .element(n => n.asCircle(1, angleRange))
+      .element(n => n.range(Array.isArray(radius) ? [radius[0] ** 2, radius[1] ** 2] : [0, radius]).output(Math.sqrt))
+      .output(([[x, y], r]) => [x * r, y * r])
+  }
+
+  asBall(radius: number | [number, number]): NoiseBuilder<TIn, [number, number, number]> {
+    return this.asNumber()
+      .tuple()
+      .element(n => n.asSphere())
+      .element(n => n.range(Array.isArray(radius) ? radius : [0, radius ** 3]).output(Math.cbrt))
+      .output(([[x, y, z], r]) => [x * r, y * r, z * r])
+  }
+
+  asList<T>(items: T[], weights?: number[]): NoiseBuilder<TIn, T> {
+    if (!weights?.length) {
+      return this.asNumber()
+        .range([0, items.length])
+        .discrete(true)
+        .output(x => items[x])
+    }
+
+    const cdf = items.reduce<[number, [number, number][]]>(
+        (p, _c, i) => [(weights[i] ?? 1) + p[0], [...p[1], [p[0], (weights[i] ?? 1) + p[0]]]],
+        [0, []],
+      )[1],
+      lookupItem: (x: number, start: number, end: number) => T = (x, start, end) => {
+        const guessIndex = (end + start) >>> 1
+        return x >= cdf[guessIndex][0] && x < cdf[guessIndex][1]
+          ? items[guessIndex]
+          : x < cdf[guessIndex][0]
+            ? lookupItem(x, start, guessIndex)
+            : lookupItem(x, guessIndex + 1, end)
+      }
+
+    return this.asNumber()
+      .range([0, cdf[cdf.length - 1][1]])
+      .output(x => lookupItem(x, 0, items.length - 1))
+  }
+
+  /**
+   * Normal/Gaussian distribution based the Box-Muller algorithm
+   * @param mean
+   * @param stdev
+   * @param clamp Clamps the output to the given range. Note that if the clamp is too narrow, the actual distribution
+   * will be bimodal at the clamp values.
+   * @returns
+   */
+  asGuassian(mean: number = 0, stdev: number = 1, clamp?: [number, number]): NoiseBuilder<TIn, [number, number]> {
+    const c = clamp ? (x: number) => (x < clamp[0] ? clamp[0] : x > clamp[1] ? clamp[1] : x) : null
+
+    return this.asNumber()
+      .tuple()
+      .element(n => n.range([0, 2 * Math.PI]))
+      .element(n => n.range([0, 1]).output(x => stdev * Math.sqrt(-2 * Math.log(x))))
+      .output(
+        clamp
+          ? ([a, b]) => [c!(b * Math.cos(a) + mean), c!(b * Math.sin(a) + mean)] as [number, number]
+          : ([a, b]) => [b * Math.cos(a) + mean, b * Math.sin(a) + mean] as [number, number],
+      )
+  }
+
+  /**
+   * Poisson distributed numbers based on the Knuth/Devroye algorithm. [https://en.wikipedia.org/wiki/Poisson_distribution]
+   * @param lambda expectation parameter. This implementation only uses Devroye, therefore large values of lambda will perform poorly.
+   * Lambda > 30 throws an exception. Default 1.
+   */
+  asPoisson(lambda: number = 1, clamp?: [number, number]): NoiseBuilder<TIn, number> {
+    if (lambda < 0 || lambda > 30) {
+      throw Error(`Poisson algorithm requires lambda in the range (0, 30). Lambda = ${lambda}`)
+    }
+
+    const c = clamp ? (x: number) => (x < clamp[0] ? clamp[0] : x > clamp[1] ? clamp[1] : x) : null,
+      inverseTransform = (u: number) => {
+        let x = 0,
+          p = Math.exp(-lambda),
+          s = p
+        while (u > s) {
+          x += 1
+          p *= lambda / x
+          s += p
+        }
+        return x
+      }
+
+    return this.asNumber()
+      .range([0, 1])
+      .output(clamp ? u => c!(inverseTransform(u)) : inverseTransform)
+  }
+
+  asDice(ds: number | number[] = 6): NoiseBuilder<TIn, number> {
+    if (!Array.isArray(ds)) {
+      return this.asNumber().range([0, ds]).discrete(true)
+    }
+
+    const ns = ds.map(d =>
+      this.input(x => x)
+        .seed('generate')
+        .asNumber()
+        .range([0, d])
+        .discrete(true)
+        .func(),
+    )
+
+    return this.asNumber().output(x => ns.map(n => n(x)).reduce((p, c) => p + c, 0))
   }
 
   //#endregion
@@ -484,13 +621,3 @@ class NoiseBuilderTuple<TIn extends InputArgs, TOuts extends TupleOutput, TParen
 
 // TODO: return this as the appropriate interface, not the raw class
 export const noise = () => new NoiseBuilder({ input: (x: number) => x, output: (x: number) => x }) //as NoiseBuilderStart<number[], number>
-
-/* working example of tuple in action
-const nt = noise()
-  .tuple()
-  .element(n => n.range([2, 3]))
-  .element(n => n.output(x => !(x & 1)))
-  .element(n => n.output(x => x.toString()))
-  //.output(([a, b, c]) => b)
-  .func()
-//*/
