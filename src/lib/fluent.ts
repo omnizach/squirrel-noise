@@ -10,7 +10,9 @@ type OptionalNumberFunc = ((x: number) => number) | undefined | null
 
 type InputArgs = any[] // eslint-disable-line @typescript-eslint/no-explicit-any
 
-type TupleOutput = any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+type OutputArg = any // eslint-disable-line @typescript-eslint/no-explicit-any
+
+//type TupleOutput = any[] // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export type NoiseOutput<TOut> = (x: number) => TOut
 
@@ -42,7 +44,7 @@ interface NoiseBuilderProps<TIn extends InputArgs, TOut> {
 }
 
 interface NoiseBuilderExecution<TIn extends InputArgs, TOut> {
-  func(): (...x: TIn) => TOut
+  noise(): (...x: TIn) => TOut
   generator(length: number): IterableIterator<TOut>
 }
 
@@ -52,7 +54,7 @@ type NoiseBuilderFluentFinal<TIn extends InputArgs, TOut> = NoiseBuilderProps<TI
 type NoiseBuilderFluentResult<TIn extends InputArgs, TOut> = NoiseBuilderFluent<TIn, TOut> &
   NoiseBuilderProps<TIn, TOut> &
   NoiseBuilderExecution<TIn, TOut> &
-  NoiseBuilderOutputs<TIn, TOut>
+  NoiseBuilderOutputs<TIn> //, TOut>
 
 interface NoiseBuilderFluent<TIn extends InputArgs, TOut> {
   seed(value: Seed): NoiseBuilderFluentResult<TIn, TOut>
@@ -62,9 +64,10 @@ interface NoiseBuilderFluent<TIn extends InputArgs, TOut> {
   discrete(value: boolean): NoiseBuilderFluentResult<TIn, TOut>
 }
 
-interface NoiseBuilderOutputs<TIn extends InputArgs, TOut> {
+interface NoiseBuilderOutputs<TIn extends InputArgs> {
+  //, TOut> {
   output<TOutNext>(value: (x: number) => TOutNext): NoiseBuilderFluentFinal<TIn, TOutNext>
-  tuple(): NoiseBuilderTuple<TIn, [], TOut>
+  //tuple(): NoiseBuilderTuple<TIn, TOut, []>
   asBoolean(): NoiseBuilder<TIn, boolean>
   asNumber(fn?: ((x: number) => number) | [number, number]): NoiseBuilder<TIn, number>
   asVect2D(range?: [[number, number] | undefined, [number, number] | undefined]): NoiseBuilder<TIn, [number, number]>
@@ -82,15 +85,16 @@ interface NoiseBuilderOutputs<TIn extends InputArgs, TOut> {
 }
 
 type NoiseBuilderInputResult<TIn extends InputArgs, TOut> = NoiseBuilderFluent<TIn, TOut> &
-  NoiseBuilderOutputs<TIn, TOut> &
+  NoiseBuilderOutputs<TIn> & //, TOut> &
   NoiseBuilderProps<TIn, TOut> &
   NoiseBuilderExecution<TIn, TOut>
 
 interface NoiseBuilderInputFluent<TIn extends InputArgs, TOut> {
   input(fn: (...x: TIn) => number): NoiseBuilderInputResult<TIn, TOut>
-  dimensions(value: Dimension): NoiseBuilderFluent<number[], TOut>
-  fromString(): NoiseBuilderFluent<string[], TOut>
-  fromIncrement(start: number): NoiseBuilderFluent<never, TOut>
+  dimensions(value: Dimension): NoiseBuilderInputResult<number[], TOut>
+  fromNumber(): NoiseBuilderInputResult<number[], TOut>
+  fromString(): NoiseBuilderInputResult<string[], TOut>
+  fromIncrement(start: number): NoiseBuilderInputResult<never, TOut>
 }
 
 // TODO: restrict the exported object to this interface
@@ -115,7 +119,7 @@ class NoiseBuilder<TIn extends InputArgs, TOut>
   implements
     NoiseBuilderInputFluent<TIn, TOut>,
     NoiseBuilderFluent<TIn, TOut>,
-    NoiseBuilderOutputs<TIn, TOut>,
+    NoiseBuilderOutputs<TIn>, //, TOut>,
     NoiseBuilderExecution<TIn, TOut>,
     NoiseBuilderProps<TIn, TOut>
 {
@@ -187,6 +191,10 @@ class NoiseBuilder<TIn extends InputArgs, TOut>
     }
   }
 
+  static createDefault(): NoiseBuilder<number[], number> {
+    return new NoiseBuilder({ input: (x: number) => x, output: x => x })
+  }
+
   //#endregion
 
   constructor(protected options: NoiseBuilderOptions<TIn, TOut>) {}
@@ -228,6 +236,10 @@ class NoiseBuilder<TIn extends InputArgs, TOut>
     })
   }
 
+  fromNumber(): NoiseBuilderInputResult<number[], TOut> {
+    return this.input((x: number) => x)
+  }
+
   fromString(): NoiseBuilderInputResult<string[], TOut> {
     return this.input((str: string) => [...str].reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0))
   }
@@ -249,7 +261,7 @@ class NoiseBuilder<TIn extends InputArgs, TOut>
     return NoiseBuilder.factory<TIn, T>({ ...this.options, output: fn })
   }
 
-  tuple(): NoiseBuilderTuple<TIn, [], TOut> {
+  tuple(): NoiseBuilderTuple<TIn, TOut, []> {
     return NoiseBuilderTuple.create(this)
   }
 
@@ -404,7 +416,7 @@ class NoiseBuilder<TIn extends InputArgs, TOut>
         .asNumber()
         .range([0, d])
         .discrete(true)
-        .func(),
+        .noise(),
     )
 
     return this.asNumber().output(x => ns.map(n => n(x)).reduce((p, c) => p + c, 0))
@@ -415,43 +427,38 @@ class NoiseBuilder<TIn extends InputArgs, TOut>
   //#region Props
 
   seed(): Seed
-  seed(value: Seed): this
-  seed(value?: Seed): Seed | this {
+  seed(value: Seed): NoiseBuilder<TIn, TOut>
+  seed(value?: Seed): Seed | NoiseBuilder<TIn, TOut> {
     if (value === undefined) return this.options.seed ?? 'declaration'
-    this.options.seed = value
-    return this
+    return NoiseBuilder.factory({ ...this.options, seed: value })
   }
 
   onSeeding(): (s: number) => void
-  onSeeding(cb: (s: number) => void): this
-  onSeeding(cb?: (s: number) => void): ((s: number) => void) | undefined | this {
+  onSeeding(cb: (s: number) => void): NoiseBuilder<TIn, TOut>
+  onSeeding(cb?: (s: number) => void): ((s: number) => void) | undefined | NoiseBuilder<TIn, TOut> {
     if (!cb) return this.options.onSeeding
-    this.options.onSeeding = cb
-    return this
+    return NoiseBuilder.factory({ ...this.options, onSeeding: cb })
   }
 
   range(): [number, number]
-  range(value: [number, number]): this
-  range(value?: [number, number]): [number, number] | this {
+  range(value: [number, number]): NoiseBuilder<TIn, TOut>
+  range(value?: [number, number]): [number, number] | NoiseBuilder<TIn, TOut> {
     if (!value) return this.options.range ?? [-0x7fff_ffff, 0x7fff_ffff]
-    this.options.range = value
-    return this
+    return NoiseBuilder.factory({ ...this.options, range: value })
   }
 
   octave(): number
-  octave(value: number): this
-  octave(value?: number): number | this {
+  octave(value: number): NoiseBuilder<TIn, TOut>
+  octave(value?: number): number | NoiseBuilder<TIn, TOut> {
     if (!value) return this.options.octave ?? 0
-    this.options.octave = value
-    return this
+    return NoiseBuilder.factory({ ...this.options, octave: value })
   }
 
   discrete(): boolean
-  discrete(value: boolean): this
-  discrete(value?: boolean): boolean | this {
+  discrete(value: boolean): NoiseBuilder<TIn, TOut>
+  discrete(value?: boolean): boolean | NoiseBuilder<TIn, TOut> {
     if (value === undefined) return this.options.discrete ?? false
-    this.options.discrete = value
-    return this
+    return NoiseBuilder.factory({ ...this.options, discrete: value })
   }
 
   //#endregion
@@ -478,7 +485,7 @@ class NoiseBuilder<TIn extends InputArgs, TOut>
     return NoiseBuilder.numberPipe(this.octaveFn, squirrel5(this.generateSeed()), this.rangeFn, this.discreteFn)
   }
 
-  func(): (...x: TIn) => TOut {
+  noise(): (...x: TIn) => TOut {
     const np = this.noiseFuncInternal()
     return (...x: TIn) => this.options.output(np(this.options.input(...x)))
   }
@@ -530,7 +537,7 @@ class NoiseBuilderLerp<TOut> extends NoiseBuilder<number[], TOut> {
     })
   }
 
-  func(): (...x: number[]) => TOut {
+  noise(): (...x: number[]) => TOut {
     const ni = this.noiseFuncInternal()
     const n = (...x: number[]) => ni(this.options.input(...x))
 
@@ -568,56 +575,123 @@ class NoiseBuilderLerp<TOut> extends NoiseBuilder<number[], TOut> {
           )
       case false:
       default:
-        return super.func()
+        return super.noise()
     }
   }
 }
 
-class NoiseBuilderTuple<TIn extends InputArgs, TOuts extends TupleOutput, TParentOut> {
-  static create<T extends InputArgs, TP>(parent: NoiseBuilder<T, TP>): NoiseBuilderTuple<T, [], TP> {
-    return new NoiseBuilderTuple<T, [], TP>(
-      parent,
-      new NoiseBuilder<T, []>({ input: parent.input(), output: () => [] }),
-    )
+type NoiseBuilderTupleOut<TIn extends InputArgs, T extends ReadonlyArray<NoiseBuilder<TIn, OutputArg>>> = {
+  [K in keyof T]: T[K] extends NoiseBuilder<TIn, infer V> ? V : never
+}
+
+const tuple = <T extends OutputArg[]>(...t: T) => t
+
+function tupleNoise<TIn extends InputArgs, TNs extends ReadonlyArray<NoiseBuilder<TIn, OutputArg>>>(
+  ns: TNs,
+): (...x: TIn) => NoiseBuilderTupleOut<TIn, TNs> {
+  const fns = ns.map(n => n.noise())
+  return (...x: TIn) => fns.map(f => f(...x)) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
+function tupleOutput<TIn extends InputArgs, TNs extends ReadonlyArray<NoiseBuilder<TIn, OutputArg>>>(
+  ns: TNs,
+): (x: number) => NoiseBuilderTupleOut<TIn, TNs> {
+  return ns.map(n => n.output()) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
+function* tupleGenerators<TIn extends InputArgs, TNs extends ReadonlyArray<NoiseBuilder<TIn, OutputArg>>>(
+  ns: TNs,
+  stop = Infinity,
+  step = 1,
+): IterableIterator<NoiseBuilderTupleOut<TIn, TNs>> {
+  const gens = ns.map(n => n.generator(Infinity, step))
+
+  for (let i = 0; i < stop; i += step) {
+    yield gens.map(g => g.next()) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+  }
+}
+
+class NoiseBuilderTupleProxy<
+  TIn extends InputArgs,
+  TNs extends ReadonlyArray<NoiseBuilder<TIn, OutputArg>>,
+> extends NoiseBuilder<TIn, NoiseBuilderTupleOut<TIn, TNs>> {
+  constructor(
+    parent: NoiseBuilder<TIn, unknown>,
+    private ns: TNs,
+  ) {
+    super({ input: parent.input(), output: tupleOutput(tuple(...ns)) })
   }
 
-  private constructor(
+  noise(): (...x: TIn) => NoiseBuilderTupleOut<TIn, TNs> {
+    return tupleNoise(tuple(...this.ns))
+  }
+
+  *generator(stop = Infinity, step = 1): IterableIterator<NoiseBuilderTupleOut<TIn, TNs>> {
+    yield* tupleGenerators(tuple(...this.ns), stop, step)
+  }
+}
+
+class NoiseBuilderTupleProxyWithOutput<
+  TIn extends InputArgs,
+  TNs extends ReadonlyArray<NoiseBuilder<TIn, OutputArg>>,
+  TOut,
+> extends NoiseBuilder<TIn, TOut> {
+  constructor(
+    parent: NoiseBuilder<TIn, unknown>,
+    private ns: TNs,
+    private outputFn: (xs: NoiseBuilderTupleOut<TIn, TNs>) => TOut,
+  ) {
+    const outTuple = tupleOutput(tuple(...ns))
+    super({ input: parent.input(), output: (x: number) => outputFn(outTuple(x)) })
+  }
+
+  noise(): (...x: TIn) => TOut {
+    const n = tupleNoise(tuple(...this.ns))
+    return (...x: TIn) => this.outputFn(n(...x))
+  }
+
+  /*
+  *generator(stop = Infinity, step = 1): IterableIterator<TOut> {
+    const g = tupleGenerators(tuple(...this.ns), stop, step)
+
+    for (let i = 0; i < stop; i += step) {
+      yield this.outputFn(g.next())
+    }
+  }
+    */
+}
+
+class NoiseBuilderTuple<TIn extends InputArgs, TParentOut, TNs extends ReadonlyArray<NoiseBuilder<TIn, OutputArg>>> {
+  static create<T extends InputArgs, TP>(parent: NoiseBuilder<T, TP>): NoiseBuilderTuple<T, TP, []> {
+    return new NoiseBuilderTuple<T, TP, []>(parent, [])
+  }
+
+  constructor(
     private parent: NoiseBuilder<TIn, TParentOut>,
-    private child: NoiseBuilder<TIn, TOuts>,
+    private ns: TNs,
   ) {}
 
   element<TOutNext>(
     nb: NoiseBuilderFunctor<TIn, TOutNext, TParentOut>,
-  ): NoiseBuilderTuple<TIn, [...TOuts, TOutNext], TParentOut> {
-    const n = typeof nb === 'function' ? nb(this.parent.clone()) : nb,
-      f = n.output(),
-      c = this.child.output()
-
-    return new NoiseBuilderTuple(
-      this.parent,
-      n.output((x: number) => [...c(x), f(x)]),
-    )
+  ): NoiseBuilderTuple<TIn, TParentOut, [...TNs, NoiseBuilder<TIn, TOutNext>]> {
+    const n = typeof nb === 'function' ? nb(this.parent.clone()) : nb
+    return new NoiseBuilderTuple(this.parent, [...this.ns, n])
   }
 
-  output(): NoiseBuilder<TIn, TOuts>
-  output<TOut>(fn: (t: TOuts) => TOut): NoiseBuilder<TIn, TOut>
-  output<TOut>(fn?: (t: TOuts) => TOut): NoiseBuilder<TIn, TOuts> | NoiseBuilder<TIn, TOut> {
-    if (!fn) {
-      return this.child
-    }
-
-    const tupleOut = this.child.output()
-    return this.child.output((x: number) => fn(tupleOut(x)))
+  output(): NoiseBuilder<TIn, NoiseBuilderTupleOut<TIn, TNs>>
+  output<TOut>(fn: (t: NoiseBuilderTupleOut<TIn, TNs>) => TOut): NoiseBuilder<TIn, TOut>
+  output<TOut>(
+    fn?: (t: NoiseBuilderTupleOut<TIn, TNs>) => TOut,
+  ): NoiseBuilder<TIn, NoiseBuilderTupleOut<TIn, TNs>> | NoiseBuilder<TIn, TOut> {
+    return fn
+      ? new NoiseBuilderTupleProxyWithOutput(this.parent, this.ns, fn)
+      : new NoiseBuilderTupleProxy(this.parent, this.ns)
   }
 
-  func(): (...x: TIn) => TOuts {
-    return this.child.func()
-  }
-
-  *generator(stop = Infinity, step = 1): IterableIterator<TOuts> {
-    yield* this.child.generator(stop, step)
+  noise(): (...x: TIn) => NoiseBuilderTupleOut<TIn, TNs> {
+    return tupleNoise(tuple(...this.ns))
   }
 }
 
 // TODO: return this as the appropriate interface, not the raw class
-export const noise = () => new NoiseBuilder({ input: (x: number) => x, output: (x: number) => x }) //as NoiseBuilderStart<number[], number>
+export const squirrel = () => NoiseBuilder.createDefault()
