@@ -244,7 +244,7 @@ class NoiseBuilder<TIn extends InputArgs, TOut>
     return this.input((str: string) => [...str].reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0))
   }
 
-  fromIncrement(): NoiseBuilderInputResult<number[], TOut> {
+  fromIncrement(): NoiseBuilderInputResult<[], TOut> {
     let i = 0
     return this.input(() => i++)
   }
@@ -306,18 +306,25 @@ class NoiseBuilder<TIn extends InputArgs, TOut>
     return this.asNumber()
       .tuple()
       .element(n => n.range([0, 2 * Math.PI]))
-      .element(n => n.range([-radius, radius]).output(z => Math.sqrt(1 - z ** 2)))
-      .output(([θ, r]) => [r * Math.cos(θ), r * Math.sin(θ), r])
+      .element(n => n.range([-1, 1]))
+      .output(([θ, r]) => {
+        const z = Math.sqrt(1 - r ** 2)
+        return [z * Math.cos(θ) * radius, z * Math.sin(θ) * radius, r * radius]
+      })
   }
 
   asDisc(
-    radius: [number, number] | number = [0, 1],
+    radius: [number, number] | number = 1,
     angleRange: [number, number] = [0, 2 * Math.PI],
   ): NoiseBuilder<TIn, [number, number]> {
+    console.log(radius)
     return this.asNumber()
       .tuple()
       .element(n => n.asCircle(1, angleRange))
-      .element(n => n.range(Array.isArray(radius) ? [radius[0] ** 2, radius[1] ** 2] : [0, radius]).output(Math.sqrt))
+      .element(n =>
+        //n.range(Array.isArray(radius) ? [radius[0] ** 2, radius[1] ** 2] : [0, radius ** 2]).output(Math.sqrt),
+        n.range([0, 1]).output(Math.sqrt),
+      )
       .output(([[x, y], r]) => [x * r, y * r])
   }
 
@@ -538,8 +545,8 @@ class NoiseBuilderLerp<TOut> extends NoiseBuilder<number[], TOut> {
   }
 
   noise(): (...x: number[]) => TOut {
-    const ni = this.noiseFuncInternal()
-    const n = (...x: number[]) => ni(this.options.input(...x))
+    const ni = this.noiseFuncInternal(),
+      n = (...x: number[]) => ni(this.options.input(...x))
 
     switch (this.options.lerp) {
       case 1:
@@ -576,6 +583,18 @@ class NoiseBuilderLerp<TOut> extends NoiseBuilder<number[], TOut> {
       case false:
       default:
         return super.noise()
+    }
+  }
+
+  // This has no effect on the output compared to the base class.
+  // However, if `step` is a fractional value, the output will be
+  // smoothed between the whole values, producing noise that has
+  // a lower frequency.
+  *generator(stop = Infinity, step = 1): IterableIterator<TOut> {
+    const ni = this.noiseFuncInternal()
+
+    for (let i = 0; i < stop; i += step) {
+      yield this.options.output(NoiseBuilderLerp.lerp1D(ni(Math.floor(i)), ni(Math.ceil(i)), i % 1))
     }
   }
 }
@@ -650,15 +669,16 @@ class NoiseBuilderTupleProxyWithOutput<
     return (...x: TIn) => this.outputFn(n(...x))
   }
 
-  /*
   *generator(stop = Infinity, step = 1): IterableIterator<TOut> {
     const g = tupleGenerators(tuple(...this.ns), stop, step)
 
     for (let i = 0; i < stop; i += step) {
-      yield this.outputFn(g.next())
+      const x = g.next().value.value
+      //yield this.outputFn(g.next().value)
+      console.log('>>>', x)
+      yield this.outputFn(x)
     }
   }
-    */
 }
 
 class NoiseBuilderTuple<TIn extends InputArgs, TParentOut, TNs extends ReadonlyArray<NoiseBuilder<TIn, OutputArg>>> {
@@ -689,7 +709,11 @@ class NoiseBuilderTuple<TIn extends InputArgs, TParentOut, TNs extends ReadonlyA
   }
 
   noise(): (...x: TIn) => NoiseBuilderTupleOut<TIn, TNs> {
-    return tupleNoise(tuple(...this.ns))
+    return this.output().noise()
+  }
+
+  *generator(stop = Infinity, step = 1): IterableIterator<NoiseBuilderTupleOut<TIn, TNs>> {
+    yield* this.output().generator(stop, step)
   }
 }
 

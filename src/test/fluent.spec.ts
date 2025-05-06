@@ -2,6 +2,8 @@ import test from 'ava'
 
 import { squirrel } from '../lib/fluent'
 
+const almost = (actual: number, expected: number, error = 1e-6) => Math.abs(actual - expected) < error
+
 test('noise with no input is valid', t => {
   const n = squirrel().noise()
 
@@ -143,7 +145,7 @@ test('noise works with 4d input', t => {
 })
 
 test('noise works with static seeds', t => {
-  const n1 = squirrel().seed(234),
+  const n1 = squirrel().fromNumber().seed(234),
     n2 = squirrel().seed(234)
 
   t.is(n1.seed(), n2.seed())
@@ -509,4 +511,111 @@ test('asVect3D range', t => {
   t.true(max[0] > 990, 'max is close to range max')
   t.true(max[1] > 990000, 'max is close to range max')
   t.true(max[2] > 9, 'max is close to range max')
+})
+
+test('asCircle', t => {
+  let [px, py] = [0, 0]
+
+  ;[...squirrel().asCircle().generator(1000)].forEach(([x, y]) => {
+    ;[px, py] = [px + x, py + y]
+    t.true(almost(x ** 2 + y ** 2, 1))
+  })
+
+  t.true(almost(px, 0, 100))
+  t.true(almost(py, 0, 100))
+  ;[
+    ...squirrel()
+      .asCircle(2, [0, Math.PI / 2])
+      .generator(100),
+  ].forEach(([x, y]) => {
+    t.true(almost(x ** 2 + y ** 2, 4))
+    t.true(x >= 0)
+    t.true(y >= 0)
+  })
+})
+
+test('asSphere is on unit unit sphere', t => {
+  const nv = squirrel().asSphere(2).noise()
+
+  for (let i = 0; i < 10000; i++) {
+    t.true(almost(nv(i)[0] ** 2 + nv(i)[1] ** 2 + nv(i)[2] ** 2, 2 ** 2))
+  }
+})
+
+test('asSphere averages to origin (no bias)', t => {
+  const nv = squirrel().fromIncrement().asSphere().noise()
+
+  const brown: [number, number, number] = [0, 0, 0]
+
+  for (let i = 0; i < 100000; i++) {
+    const v = nv()
+    brown[0] += v[0]
+    brown[1] += v[1]
+    brown[2] += v[2]
+  }
+
+  //t.log(brown)
+
+  // it's not clear what actually counts as statistically sound on this, just guessing on reasonable constraints
+  t.true(Math.abs(brown[0]) < 700)
+  t.true(Math.abs(brown[1]) < 700)
+  t.true(Math.abs(brown[2]) < 700)
+})
+
+test('asSphere axes are evenly spread', t => {
+  const nv = squirrel().fromIncrement().asSphere().noise()
+
+  const brown: [number, number, number] = [0, 0, 0]
+
+  for (let i = 0; i < 30000; i++) {
+    const v = nv()
+    brown[0] += Math.abs(v[0])
+    brown[1] += Math.abs(v[1])
+    brown[2] += Math.abs(v[2])
+  }
+
+  //t.log(brown)
+
+  // it's not clear what actually counts as statistically sound on this, just guessing on reasonable constraints
+  t.true(brown[0] > 14900 && brown[0] < 15100)
+  t.true(brown[1] > 14900 && brown[1] < 15100)
+  t.true(brown[2] > 14900 && brown[2] < 15100)
+})
+
+test('asDisc', t => {
+  ;[...squirrel().asDisc().generator(1000)].forEach(([x, y]) => {
+    t.log(x, y)
+    t.true(x ** 2 + y ** 2 <= 1)
+  })
+
+  /*
+  ;[
+    ...squirrel()
+      .asDisc([2, 3], [0, Math.PI / 2])
+      .generator(100),
+  ].forEach(([x, y]) => {
+    t.true(x ** 2 + y ** 2 >= 4 && x ** 2 + y ** 2 < 9)
+    t.true(x >= 0)
+    t.true(y >= 0)
+  })
+  */
+})
+
+test.only('asDisc debug', t => {
+  /*
+  const angleRange: [number, number] = [0, Math.PI * 2],
+    radius: [number, number] | number = 1
+  const s = squirrel()
+    .asNumber()
+    .tuple()
+    .element(n => n.asCircle(1, angleRange))
+    .element(n =>
+      n.range(Array.isArray(radius) ? [radius[0] ** 2, radius[1] ** 2] : [0, radius ** 2]).output(Math.sqrt),
+    )
+    .output(([[x, y], r]) => [x * r, y * r])
+    .noise()
+  */
+
+  t.log([...squirrel().asDisc().generator(100)])
+  t.pass()
 })
