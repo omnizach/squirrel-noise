@@ -28,51 +28,44 @@ All noise functions accept input numbers and output various outputs that vary wi
 They are deterministic in that they will always output the same value for the same input.
 
 ```
-const n = noiseNumber({ seed: 123, range: [0,1] })
+const n = squirrel().seed(123).range([0, 1]).noise()
 console.log(n(99)) // 303927878
 ```
-
-## Random Functions
-
-The random functions act like random number generators by producing varying output with
-no input. The sequence they produce is still deterministic. If you recreate the random
-function with the same options, it will produce the same sequence.
 
 ## Noise Options
 
 ### seed
 
-An input number that varies the noise/sequence.
+An input number that varies the noise/sequence. Seeding can be controlled with additional options:
 
-Default: 0
+* `random`: every time a `noise` or `generator` function is produced, it reseeds the function with `Math.random()`.
+* `generate`: every time a `noise` or `generate` function is produced, it is seeded with a new seed value that is generated from a deterministic number generator.
+  This has the effect of being deterministic if the sequence of `noise` calls is the same across multiple runs.
+* `declaration`: the seed is derived from the function call, remaining the same for the same code base across multiple runs. However, if `noise` is called in a loop,
+  it will get seeded with the same value.
+* Number: seeds with the constant value given.
 
-### dimensions
+Default: `'declaration'`
 
-Determines how many input numbers are considered by the resulting noise function. For example:
+### onSeeding
 
-```
-const ns = noiseNumber({ dimensions: 2 })
-console.log(ns(1)) // -304090833, 2nd parameter is assumed to be 0
-console.log(ns(1, 1)) // -286857965
-console.log(ns(1, 1, 1)) // also -286857965 because it ignores the 3rd parameter
-```
-
-Default: 1
+A callback with the signature `(seedValue: number) => void`. This is called whenever a `noise` or `generator` function is created. This is useful for when the seed value
+is set by one of the automatic options. If it is useful to know which seed value is actually used, this callback can be used to get it.
 
 ### range
 
-Changes the output to be in the given range `[min, max)`.
-The default range is `[-0x7fffffff, 0x7fffffff]`, or a full 32-bit signed int.
+Changes the output to be in the given range `[min, max]`.
+The default range is `[-0x7fff_ffff, 0x7fff_ffff]`, or a full 32-bit signed int.
 
-## discrete
+### discrete
 
 Converts the resulting number from a float to an int via `Math.floor`. This is useful if the result is used to index into an array, for example.
-Keep in mind that the upper bound of the range is not included as a potential output. For example, to replicate rolling a 6-sided die (a D6),
-the options would be: `{ discrete: true, range: [1, 7] }`.
+Keep in mind that the upper bound of the range is not included as a potential output. For example, to replicate rolling a 6-sided die (a D6): `squirrel().discrete(true).range([1, 7])`.
+See also: `squirrel().asDice()`.
 
 Default: false
 
-## lerp
+### lerp
 
 Linear interpolates between fractional points. Behind the scenes, the noise function uses a lot of bit-twidling. In Javascript, this has the effect of coercing
 any float numbers down (or up for negatives). So, for most noise functions, `n(1) = n(1.1) = n(1.99) != n(2.0)`. So, to smooth fractional inputs, enabling `lerp`
@@ -86,3 +79,135 @@ Note: the output is not affected by this issue and will be continously with floa
 
 Octave allows for other smoothing options by shifting the input by `octave` bits. For example, with `octave = 1`, `n(1) = n(0)`, `n(3) = n(2)`, etc. When combined with the [lerp]
 option, this provides linear smoothing at a wider range than just whole numbers.
+
+## Input/Creation Options
+
+### Input Function
+
+`.input((...xs: number[]) => number)`
+
+### Dimensions
+
+Determines how many input numbers are considered by the resulting noise function. For example:
+
+```
+const ns = squirrel().dimensions(2).noise()
+console.log(ns(1)) // -304090833, 2nd parameter is assumed to be 0
+console.log(ns(1, 1)) // -286857965
+console.log(ns(1, 1, 1)) // also -286857965 because it ignores the 3rd parameter
+```
+
+Default: 1
+
+### From Increment
+
+This replicates a random generator by just producing random output from no input.
+
+```
+const s = squirrel().fromIncrement().noise()
+s() // a number
+s() // a different number
+```
+
+## Output Options
+
+### Output Function
+
+`.output<T>(transformer: (x: number) => T)`
+
+Generic output transformer which allows mapping the output number to any desired output.
+
+### asBoolean
+
+`.asBoolean()`
+
+Returns noise as booleans.
+
+### asNumber
+
+`.asNumber(rangeOrTransform?: [number, number] | (x: number) => number)`
+
+Returns noise as numbers. This is the default output from `squirrel()`. This can be customized with range or transform function.
+
+### asVect2D
+
+`.asVect2D(range?: [number, number] | [[number, number], [number, number]])`
+
+Returns `[number, number]` tuples. Accepts range in the form `[number, number]` for controlling both outputs or `[[number, number], [number, number]]` to control them separately.
+
+### asVect3D
+
+`.asVect3D(range?: [number, number] | [[number, number], [number, number], [number, number]])`
+
+Returns `[number, number, number]` tuples. Accepts range in the form `[number, number]` for controlling all outputs or `[[number, number], [number, number], [number, number]]` to control them separately.
+
+### asCircle
+
+`.asCircle(radius?: number, arcRangle?: [number, number])`
+
+Returns `[number, number]` tuples. The values represent a point which lies on the circle or arc. Accepts a radius (default is `1`) and arc range (default is `[0, 2 * Math.PI]`).
+
+### asSphere
+
+`.asSphere(radius?: number)`
+
+Returns `[number, number, number]` where the 3d point is a sphere of the given radius (default `1`).
+
+### asDisc
+
+`.asDisc(radiusRange?: number | [number, number], arcRange?: [number, number])`
+
+Returns `[number, number]` where the 2d points are inside the disc or annulus. If the radius is provided as a range, it represents the inner and outer radii.
+
+### asBall
+
+`.asBall(radiusRange?: number | [number, number])`
+
+Returns `[number, number, number]` where the 3d points are inside the ball. The the radius is provided as a range, it represents the inner and outer radii, essentially
+removing the ball of inner radius from the output.
+
+### asList
+
+`.asList<T>(items: T[], weight?: number[])`
+
+### asGuassian
+
+`.asGuassian(mean?: number, stdev?: number)`
+
+### asPoisson
+
+`.asPoisson(lambda?: number)`
+
+### asDice
+
+`.asDice(diceNumbers: number[])`
+
+### tuple
+
+Creates a tuple where each element of the tuple is generated by its own noise function. A tuple can have as many `.element`'s added to it to construct the tuple.
+The `element` function accepts any `NoiseBuilder` (typically starting from the `squirrel()`) or a function of the form `(p: NoiseBuilder) => NoiseBuilder` where `p` is
+the parent, the `NoiseBuilder` which `tuple` was initially called. The given value can be safely customized for each element.
+
+Each element of the tuple is generated with the given `NoiseBuilder` and is seeded based on the parent's seed value. Note that if the seed is set to a constant number, that same
+seed value will be passed to each element. This may not be desireable since the output is in effect correlated.
+
+```
+const n = squirrel()
+          .tuple()
+          .element(p => p.range([0, 1]))
+          .element(p => p.range([0, 10]))
+          .output()
+n(0) // [<number between 0 and 1>, <number between 0 and 10>]
+```
+
+The `output` function for a tuple works a little differently from the normal version. It optionally accepts a transform function to convert the resulting tuple to another type.
+It them returns the wrapped tuple as a complete `NoiseBuilder` object.
+
+```
+const n = squirrel()
+          .tuple()
+          .element(p => p.range([0, 1]))
+          .element(p => p.range([0, 10]))
+          .output(([a, b]) => a + b)
+n(0) // <number between 0 and 11>
+```

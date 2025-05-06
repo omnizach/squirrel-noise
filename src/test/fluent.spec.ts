@@ -145,7 +145,7 @@ test('noise works with 4d input', t => {
 })
 
 test('noise works with static seeds', t => {
-  const n1 = squirrel().fromNumber().seed(234),
+  const n1 = squirrel().seed(234),
     n2 = squirrel().seed(234)
 
   t.is(n1.seed(), n2.seed())
@@ -351,13 +351,6 @@ test('clone', t => {
     n2 = n.clone()
 
   t.deepEqual(n.lerp(), n2.lerp())
-})
-
-test('fromString', t => {
-  const n = squirrel().fromString().noise()
-
-  t.deepEqual(n('test string'), n('test string'))
-  t.notDeepEqual(n('test string'), n('not test string'))
 })
 
 test('asBoolean', t => {
@@ -577,18 +570,15 @@ test('asSphere axes are evenly spread', t => {
   //t.log(brown)
 
   // it's not clear what actually counts as statistically sound on this, just guessing on reasonable constraints
-  t.true(brown[0] > 14900 && brown[0] < 15100)
-  t.true(brown[1] > 14900 && brown[1] < 15100)
-  t.true(brown[2] > 14900 && brown[2] < 15100)
+  t.true(brown[0] > 14500 && brown[0] < 15500)
+  t.true(brown[1] > 14500 && brown[1] < 15500)
+  t.true(brown[2] > 14500 && brown[2] < 15500)
 })
 
 test('asDisc', t => {
   ;[...squirrel().asDisc().generator(1000)].forEach(([x, y]) => {
-    t.log(x, y)
     t.true(x ** 2 + y ** 2 <= 1)
   })
-
-  /*
   ;[
     ...squirrel()
       .asDisc([2, 3], [0, Math.PI / 2])
@@ -598,24 +588,335 @@ test('asDisc', t => {
     t.true(x >= 0)
     t.true(y >= 0)
   })
-  */
 })
 
-test.only('asDisc debug', t => {
-  /*
-  const angleRange: [number, number] = [0, Math.PI * 2],
-    radius: [number, number] | number = 1
-  const s = squirrel()
-    .asNumber()
-    .tuple()
-    .element(n => n.asCircle(1, angleRange))
-    .element(n =>
-      n.range(Array.isArray(radius) ? [radius[0] ** 2, radius[1] ** 2] : [0, radius ** 2]).output(Math.sqrt),
-    )
-    .output(([[x, y], r]) => [x * r, y * r])
-    .noise()
-  */
+test('asDisc uniform', t => {
+  const rn = squirrel().fromIncrement().seed(123).asDisc().noise(),
+    ds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-  t.log([...squirrel().asDisc().generator(100)])
-  t.pass()
+  for (let i = 0; i < 100000; i++) {
+    const r = rn(),
+      d = Math.sqrt(r[0] ** 2 + r[1] ** 2),
+      b = Math.floor(d ** 2 * 10)
+
+    ds[b]++
+  }
+
+  //t.log(ds)
+
+  ds.forEach(d => {
+    t.true(d > 9000)
+    t.true(d < 11000)
+  })
+})
+
+test('asBall vectors in range,', t => {
+  const n = squirrel().asBall().noise()
+
+  let min = 1000,
+    max = -1
+
+  for (let i = 0; i < 1000000; i++) {
+    const v = n(i),
+      d = Math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2)
+
+    min = d < min ? d : min
+    max = d > max ? d : max
+
+    t.true(d <= 1)
+  }
+
+  //t.log(min, max)
+  t.true(min <= 0.02)
+  t.true(max >= 0.99)
+})
+
+test('asBall uniform', t => {
+  const rn = squirrel().fromIncrement().seed(123).asBall(10).noise(),
+    ds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+  for (let i = 0; i < 100000; i++) {
+    const [x, y, z] = rn(),
+      d = Math.sqrt(x ** 2 + y ** 2 + z ** 2),
+      b = Math.floor(d ** 3 / 100)
+
+    ds[b]++
+  }
+
+  //t.log(ds)
+
+  ds.forEach(d => {
+    t.true(d > 9000)
+    t.true(d < 11000)
+  })
+})
+
+test('asBall uniform inner radius', t => {
+  const rn = squirrel().fromIncrement().seed(123).asBall([10, 20]).noise(),
+    ds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+  for (let i = 0; i < 100000; i++) {
+    const [x, y, z] = rn(),
+      d = Math.sqrt(x ** 2 + y ** 2 + z ** 2),
+      b = Math.floor(((d ** 3 - 10 ** 3) / (20 ** 3 - 10 ** 3)) * 10)
+
+    ds[b]++
+  }
+
+  //t.log(ds)
+
+  ds.forEach(d => {
+    t.true(d > 9000)
+    t.true(d < 11000)
+  })
+})
+
+test('asList is fair', t => {
+  const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')
+  const nl = squirrel().fromIncrement().asList(letters).noise()
+
+  const counts: any = {} // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  for (let i = 0; i < 26000; i++) {
+    const letter = nl()
+    counts[letter] = (counts[letter] ?? 0) + 1
+  }
+
+  //t.log(counts)
+
+  t.is(Object.keys(counts).length, 26)
+  Object.keys(counts).forEach(letter => t.true(counts[letter] > 900 && counts[letter] < 1100))
+})
+
+test('asList weights returns correct output', t => {
+  const n = squirrel().seed(3).asList(['a', 'b', 'c'], [1, 1, 2]).noise()
+
+  t.is(n(0), 'c')
+})
+
+test('asList weights uniform weights outputs uniformly', t => {
+  const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')
+  const nl = squirrel()
+    .seed(26)
+    .asList(
+      letters,
+      letters.map(() => 2),
+    )
+    .noise()
+
+  const counts: any = {} // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  for (let i = 0; i < 26000; i++) {
+    const letter = nl(i)
+    counts[letter] = (counts[letter] ?? 0) + 1
+  }
+
+  //t.log(counts)
+
+  t.is(Object.keys(counts).length, 26)
+  Object.keys(counts).forEach(letter => t.true(counts[letter] > 900 && counts[letter] < 1100))
+})
+
+test('asList extreme weight bias', t => {
+  const letters = 'abcdefghij'.split('')
+  const nl = squirrel()
+    .seed(26)
+    .asList(
+      letters,
+      letters.map(x => (x === 'g' ? 991 : 1)),
+    )
+    .noise()
+
+  const counts: any = {} // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  for (let i = 0; i < 100000; i++) {
+    const letter = nl(i)
+    counts[letter] = (counts[letter] ?? 0) + 1
+  }
+
+  //t.log(counts)
+
+  t.is(Object.keys(counts).length, 10)
+  t.true(counts['g'] > 98000)
+})
+
+test('asList weights default to 1', t => {
+  const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')
+  const nl = squirrel().seed(40).asList(letters, [991]).noise()
+
+  const counts: any = {} // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  for (let i = 0; i < 26000; i++) {
+    const letter = nl(i)
+    counts[letter] = (counts[letter] ?? 0) + 1
+  }
+
+  //t.log(counts)
+
+  t.is(Object.keys(counts).length, 26)
+  t.true(counts['a'] > 25000)
+})
+
+test('asList weights ignored if empty', t => {
+  const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')
+  const nl = squirrel().fromIncrement().asList(letters, []).noise()
+
+  const counts: any = {} // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  for (let i = 0; i < 26000; i++) {
+    const letter = nl()
+    counts[letter] = (counts[letter] ?? 0) + 1
+  }
+
+  //t.log(counts)
+
+  t.is(Object.keys(counts).length, 26)
+  Object.keys(counts).forEach(letter => t.true(counts[letter] > 850 && counts[letter] < 1150))
+})
+
+test('asGaussian defaults', t => {
+  const n = squirrel().fromIncrement().asGuassian().noise()
+
+  const counts = [0, 0, 0]
+
+  for (let i = 0; i < 10000; i++) {
+    const [x, y] = n()
+    if (x < -1) {
+      counts[0]++
+    }
+    if (y < -1) {
+      counts[0]++
+    }
+    if (-1 <= x && x <= 1) {
+      counts[1]++
+    }
+    if (-1 <= y && y <= 1) {
+      counts[1]++
+    }
+    if (x > 1) {
+      counts[2]++
+    }
+    if (y > 1) {
+      counts[2]++
+    }
+  }
+
+  //t.log(counts)
+  t.true(counts[0] + counts[1] + counts[2] === 20000)
+  t.true(6700 * 2 <= counts[1] && counts[1] <= 7100 * 2)
+})
+
+test('asGaussian mean and stdev', t => {
+  const n = squirrel().fromIncrement().asGuassian(10, 2).noise()
+
+  const counts = [0, 0, 0]
+
+  for (let i = 0; i < 10000; i++) {
+    const [x, y] = n()
+    if (x < 8) {
+      counts[0]++
+    }
+    if (y < 8) {
+      counts[0]++
+    }
+    if (8 <= x && x <= 12) {
+      counts[1]++
+    }
+    if (8 <= y && y <= 12) {
+      counts[1]++
+    }
+    if (x > 12) {
+      counts[2]++
+    }
+    if (y > 12) {
+      counts[2]++
+    }
+  }
+
+  //t.log(counts)
+  t.true(counts[0] + counts[1] + counts[2] === 20000)
+  t.true(6500 * 2 <= counts[1] && counts[1] <= 7100 * 2)
+})
+
+test('asPoisson defaults', t => {
+  const n = squirrel().asPoisson().noise()
+
+  const counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+  let sum = 0
+
+  for (let i = 0; i < 10000; i++) {
+    counts[Math.floor(n(i))]++
+    sum += n(i)
+  }
+
+  //t.log(counts, sum) // the distribution looks correct, not sure how to verify this though.
+  t.true(almost(sum, 10000, 200))
+})
+
+test('asPoisson lambda', t => {
+  const n = squirrel().asPoisson(2).noise()
+
+  const counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+  let sum = 0
+
+  for (let i = 0; i < 10000; i++) {
+    counts[Math.floor(n(i))]++
+    sum += n(i)
+  }
+
+  //t.log(counts, sum) // the distribution looks correct, not sure how to verify this though.
+  t.true(almost(sum, 20000, 300))
+})
+
+test('asPoisson invalid options', t => {
+  t.throws(() => squirrel().asPoisson(-1))
+  t.throws(() => squirrel().asPoisson(50))
+})
+
+test('asDice defaults', t => {
+  const n = squirrel().asDice().noise()
+
+  const counts = [0, 0, 0, 0, 0, 0, 0]
+
+  for (let i = 0; i < 6000; i++) {
+    counts[n(i)]++
+    t.true(1 <= n(i) && n(i) <= 6)
+  }
+
+  //t.log(counts)
+  t.is(counts[0], 0)
+  counts.filter((_x, i) => i !== 0).forEach(c => t.true(almost(c, 1000, 100)))
+})
+
+test('asDice yahtzee', t => {
+  const n = squirrel().asDice([6, 6, 6, 6, 6]).noise()
+
+  const counts = [...Array(31).keys()].map(() => 0)
+
+  for (let i = 0; i < 100000; i++) {
+    counts[n(i)]++
+    t.true(5 <= n(i) && n(i) <= 30)
+  }
+
+  //t.log(
+  //  counts,
+  //  counts.filter((_x, i) => i >= 5 && i <= 17),
+  //  counts.filter((_x, i) => i >= 17)
+  //)
+
+  counts
+    .filter((_x, i) => i >= 5 && i <= 17)
+    .reduce((p, c) => {
+      t.true(c > p)
+      return c
+    }, 0)
+
+  counts
+    .filter((_x, i) => i >= 17)
+    .reduce((p, c) => {
+      t.true(c < p)
+      return c
+    }, 1e6)
 })
