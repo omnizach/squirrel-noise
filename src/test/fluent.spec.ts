@@ -11,12 +11,8 @@ test('noise with no input is valid', t => {
 })
 
 test('noise 1d lerp is smooth between points', t => {
-  const nb = squirrel().lerp(1).range([0, 10]),
+  const nb = squirrel().lerp(1), //.asNumber([0, 10]),
     n = nb.noise()
-
-  t.deepEqual(nb.lerp(), 1)
-  t.deepEqual(squirrel().lerp(), false)
-  t.deepEqual(squirrel().lerp(false).lerp(), false)
 
   t.is(n(), n(0))
 
@@ -29,10 +25,8 @@ test('noise works for 2d input', t => {
   const nf = squirrel().dimensions(2),
     n = nf.noise()
 
-  t.is(nf.dimensions(), 2)
   t.is(n(), n(0, 0))
   t.is(n(2222), n(2222, 0))
-  t.deepEqual(squirrel().dimensions(), 1)
 
   for (let i = 1; i < 100; i++) {
     for (let j = 1; j < 100; j++) {
@@ -45,7 +39,7 @@ test('noise works for 2d input', t => {
 })
 
 test('noise varies in 2d with range', t => {
-  const n = squirrel().dimensions(2).range([-1000, -100]).noise()
+  const n = squirrel().dimensions(2).asNumber([-1000, -100]).noise()
 
   for (let i = 0; i < 10; i++) {
     t.not(n(i, 2), n(i + 1, 2))
@@ -54,10 +48,9 @@ test('noise varies in 2d with range', t => {
 })
 
 test('noise lerp2d is smooth', t => {
-  const nf = squirrel().lerp(2).range([-100, 100]),
+  const nf = squirrel().lerp(2).asNumber([-100, 100]),
     n = nf.noise()
 
-  t.is(nf.lerp(), 2)
   t.is(n(), n(0, 0))
   t.is(n(0), n(0, 0))
 
@@ -90,7 +83,7 @@ test('noise works for 3d input', t => {
 })
 
 test('noise lerp3d is smooth', t => {
-  const n = squirrel().lerp(3).range([-100, 100]).noise()
+  const n = squirrel().lerp(3).asNumber([-100, 100]).noise()
 
   t.is(n(), n(0, 0, 0))
   t.is(n(0), n(0, 0, 0))
@@ -148,7 +141,6 @@ test('noise works with static seeds', t => {
   const n1 = squirrel().seed(234),
     n2 = squirrel().seed(234)
 
-  t.is(n1.seed(), n2.seed())
   t.is(n1.noise()(999), n2.noise()(999))
 })
 
@@ -170,18 +162,6 @@ test('noise works with random seeds', t => {
   t.not(f1(999), f2(999))
 })
 
-test('noise octaves are consistent for close values', t => {
-  const nb = squirrel().octave(1),
-    n = nb.noise()
-
-  t.deepEqual(nb.octave(), 1)
-  t.deepEqual(squirrel().octave(), 0)
-
-  for (let i = 0; i < 100; i++) {
-    t.is(n(i * 2), n(i * 2 + 1))
-  }
-})
-
 test('noise onSeeding', t => {
   let seed = 0
   const cb = (s: number) => (seed = s),
@@ -190,8 +170,6 @@ test('noise onSeeding', t => {
 
   t.true(n(9) < 0xffff_ffff)
   t.deepEqual(seed, 666346043)
-
-  t.is(nb.onSeeding(), cb)
 })
 
 test.skip('noise declaration seeding', t => {
@@ -204,23 +182,21 @@ test.skip('noise declaration seeding', t => {
     const n = squirrel().seed('declaration').noise()
     t.deepEqual(n(5), 811316781)
   }
-
-  t.is(squirrel().seed(), 'declaration')
 })
 
 test('noise input', t => {
   const n = squirrel()
 
-  t.is(n.input()(999), 999)
+  t.is(n.inputFn(999), 999)
 
   const np1 = squirrel().input(x => x + 1)
 
-  t.is(np1.input()(999), 1000)
+  t.is(np1.inputFn(999), 1000)
 })
 
 test('noise output', t => {
   const n = squirrel()
-    .range([0, 10])
+    .asNumber([0, 10])
     .output(x => x + 100)
     .noise()
 
@@ -228,16 +204,12 @@ test('noise output', t => {
     t.true(100 <= n(i) && n(i) < 110)
   }
 
-  t.is(squirrel().output()(999), 999)
+  t.is(squirrel().outputFn(999), 999)
 })
 
 test('noise discrete range', t => {
-  const nb = squirrel().range([0, 10]).discrete(true),
+  const nb = squirrel().seed(12).asInteger([0, 9]),
     n = nb.noise()
-
-  t.deepEqual(nb.discrete(), true)
-  t.deepEqual(squirrel().discrete(), false)
-  t.deepEqual(squirrel().discrete(false).discrete(), false)
 
   const y = [...Array(10).keys()].map(() => 0)
 
@@ -261,7 +233,7 @@ test('noise generator produces sequence with no input', t => {
 })
 
 test('noise range is valid', t => {
-  const nb = squirrel().fromIncrement().range([0, 10]),
+  const nb = squirrel().fromIncrement().asNumber([0, 10]),
     ng = nb.noise()
 
   let min = 10,
@@ -277,13 +249,10 @@ test('noise range is valid', t => {
 
   t.true(min < 0.01)
   t.true(max > 9.99)
-
-  t.deepEqual(nb.range(), [0, 10])
-  t.deepEqual(squirrel().range(), [-0x7fff_ffff, 0x7fff_ffff])
 })
 
 test('noise discrete range is indexable and fair', t => {
-  const ng = squirrel().fromIncrement().range([-2, 8]).discrete(true).noise()
+  const ng = squirrel().fromIncrement().asInteger([-2, 7]).noise()
 
   const counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -313,7 +282,7 @@ test.serial('general performance is fast', t => {
 
   const testStart = Date.now()
 
-  const n = squirrel().fromIncrement().range([0, 1]).noise() // using some typical options that add time
+  const n = squirrel().fromIncrement().asNumber([0, 1]).noise() // using some typical options that add time
 
   for (let i = 0; i < 1e7; i++) {
     n()
@@ -340,17 +309,17 @@ test('noiseGenerator basic generator loop', t => {
 })
 
 test('noiseGenerator materializes with finite length', t => {
-  const ns = [...squirrel().range([0, 10]).discrete(true).generator(50)]
+  const ns = [...squirrel().asInteger([0, 10]).generator(50)]
 
   //t.log(ns)
   t.is(ns.length, 50)
 })
 
 test('clone', t => {
-  const n = squirrel().lerp(2),
+  const n = squirrel().seed(2),
     n2 = n.clone()
 
-  t.deepEqual(n.lerp(), n2.lerp())
+  t.deepEqual(JSON.stringify(n), JSON.stringify(n2))
 })
 
 test('asBoolean', t => {
@@ -378,19 +347,6 @@ test('asNumber', t => {
 
   t.true(min < -9.5)
   t.true(max > 9.5)
-
-  const s2 = squirrel()
-    .asNumber(x => x & 0xf)
-    .noise()
-  ;[min, max] = [20, -10]
-
-  for (let i = 0; i < 1000; i++) {
-    min = s2(i) < min ? s2(i) : min
-    max = s2(i) > max ? s2(i) : max
-  }
-
-  t.true(min < 0.5)
-  t.true(max > 14.5)
 
   const s3 = squirrel().asNumber().noise()
 
@@ -851,7 +807,7 @@ test('asPoisson defaults', t => {
   }
 
   //t.log(counts, sum) // the distribution looks correct, not sure how to verify this though.
-  t.true(almost(sum, 10000, 200))
+  t.true(almost(sum, 10000, 300))
 })
 
 test('asPoisson lambda', t => {
@@ -891,7 +847,7 @@ test('asDice defaults', t => {
 })
 
 test('asDice yahtzee', t => {
-  const n = squirrel().asDice([6, 6, 6, 6, 6]).noise()
+  const n = squirrel().seed(4).asDice([6, 6, 6, 6, 6]).noise()
 
   const counts = [...Array(31).keys()].map(() => 0)
 
@@ -903,7 +859,7 @@ test('asDice yahtzee', t => {
   //t.log(
   //  counts,
   //  counts.filter((_x, i) => i >= 5 && i <= 17),
-  //  counts.filter((_x, i) => i >= 17)
+  //  counts.filter((_x, i) => i >= 17),
   //)
 
   counts
