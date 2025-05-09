@@ -19,6 +19,7 @@ interface NoiseOptions<TOut> {
   onSeeding?: (s: number) => void
   transform?: (x: number) => number
   lerp?: Lerp
+  flavor?: 'base' | 'lerp' | 'tuple' | 'tuple-output'
 }
 
 //#region Noise Interfaces
@@ -554,10 +555,20 @@ function tupleOutput<TNs extends ReadonlyArray<NoiseFinal<OutputArg>>>(ns: TNs):
 
 class NoiseTuple<TNs extends ReadonlyArray<NoiseFinal<OutputArg>>> extends Noise<NoiseTupleOut<TNs>> {
   constructor(
-    parent: Noise<unknown>,
+    private parent: Noise<unknown>,
     private ns: TNs,
   ) {
     super({ input: parent.inputFn, output: tupleOutput(tuple(...ns)) })
+  }
+
+  map(): Noise<number>
+  map<TOutNext>(fn: (x: NoiseTupleOut<TNs>) => TOutNext): Noise<TOutNext>
+  map<TOutNext>(fn?: (x: NoiseTupleOut<TNs>) => TOutNext): Noise<number> | Noise<TOutNext> {
+    if (!fn) {
+      return Noise.factory({ ...this.options, output: Noise.numberFuncIdentity })
+    }
+
+    return new NoiseTupleWithOutput<TNs, TOutNext>(this.parent, this.ns, fn)
   }
 
   noise(): (...x: number[]) => NoiseTupleOut<TNs> {

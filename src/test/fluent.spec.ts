@@ -501,23 +501,12 @@ test.only('asSphere averages to origin (no bias)', t => {
     //.seed(1)
     .onSeeding(s => t.log('seed:', s))
     .tuple()
-    .element(n =>
-      n
-        .seed(1)
-        .onSeeding(s => t.log('seed:', s))
-        .asNumber([0, 2 * Math.PI]),
-    )
-    .element(n =>
-      n
-        .seed(999)
-        .onSeeding(s => t.log('seed:', s))
-        .asNumber([-1, 1]),
-    )
+    .element(n => n.onSeeding(s => t.log('seed:', s)).asNumber([0, 2 * Math.PI]))
+    .element(n => n.onSeeding(s => t.log('seed:', s)).asNumber([-1, 1]))
     .output()
     .map(([θ, r]) => {
       const z = Math.sqrt(1 - r ** 2)
-      //return [z * Math.cos(θ), z * Math.sin(θ), r * 2]
-      return [z * Math.cos(θ), r, θ]
+      return [z * Math.cos(θ), z * Math.sin(θ), r * 2]
     })
     .noise()
 
@@ -525,10 +514,10 @@ test.only('asSphere averages to origin (no bias)', t => {
 
   let [xMin, xMax] = [Infinity, -Infinity]
 
-  for (let i = 0; i < 1000; i++) {
-    const [x, y, z] = nv()
+  for (let i = 0; i < 10000; i++) {
+    const [y, x, z] = nv()
 
-    //t.true(-1 <= x && x <= 1)
+    t.true(-1 <= x && x <= 1)
 
     brown[0] += x
     brown[1] += y
