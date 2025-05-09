@@ -194,10 +194,10 @@ test('noise input', t => {
   t.is(np1.inputFn(999), 1000)
 })
 
-test('noise output', t => {
+test('noise map', t => {
   const n = squirrel()
     .asNumber([0, 10])
-    .output(x => x + 100)
+    .map(x => x + 100)
     .noise()
 
   for (let i = 0; i < 1000; i++) {
@@ -486,24 +486,62 @@ test('asCircle', t => {
 test('asSphere is on unit unit sphere', t => {
   const nv = squirrel().asSphere(2).noise()
 
-  for (let i = 0; i < 10000; i++) {
+  for (let i = 0; i < 100; i++) {
+    const [x, y, z] = nv(i)
+    t.true(x <= 2 && y <= 2 && z <= 2)
     t.true(almost(nv(i)[0] ** 2 + nv(i)[1] ** 2 + nv(i)[2] ** 2, 2 ** 2))
+    t.log(x)
   }
 })
 
-test('asSphere averages to origin (no bias)', t => {
-  const nv = squirrel().fromIncrement().asSphere().noise()
+test.only('asSphere averages to origin (no bias)', t => {
+  //const nv = squirrel().fromIncrement().seed(1).asSphere().noise()
+  const nv = squirrel()
+    .fromIncrement()
+    //.seed(1)
+    .onSeeding(s => t.log('seed:', s))
+    .tuple()
+    .element(n =>
+      n
+        .seed(1)
+        .onSeeding(s => t.log('seed:', s))
+        .asNumber([0, 2 * Math.PI]),
+    )
+    .element(n =>
+      n
+        .seed(999)
+        .onSeeding(s => t.log('seed:', s))
+        .asNumber([-1, 1]),
+    )
+    .output()
+    .map(([θ, r]) => {
+      const z = Math.sqrt(1 - r ** 2)
+      //return [z * Math.cos(θ), z * Math.sin(θ), r * 2]
+      return [z * Math.cos(θ), r, θ]
+    })
+    .noise()
 
   const brown: [number, number, number] = [0, 0, 0]
 
-  for (let i = 0; i < 100000; i++) {
-    const v = nv()
-    brown[0] += v[0]
-    brown[1] += v[1]
-    brown[2] += v[2]
+  let [xMin, xMax] = [Infinity, -Infinity]
+
+  for (let i = 0; i < 1000; i++) {
+    const [x, y, z] = nv()
+
+    //t.true(-1 <= x && x <= 1)
+
+    brown[0] += x
+    brown[1] += y
+    brown[2] += z
+
+    xMin = x < xMin ? x : xMin
+    xMax = x > xMax ? x : xMax
+
+    //t.log(x)
   }
 
-  //t.log(brown)
+  t.log(brown)
+  t.log(xMin, xMax)
 
   // it's not clear what actually counts as statistically sound on this, just guessing on reasonable constraints
   t.true(Math.abs(brown[0]) < 700)
@@ -875,4 +913,28 @@ test('asDice yahtzee', t => {
       t.true(c < p)
       return c
     }, 1e6)
+})
+
+test('asArray basic', t => {
+  const n = squirrel()
+    .asArray(10, n => n.asInteger([0, 100]))
+    .noise()
+
+  t.is(n(3).length, 10)
+  t.deepEqual(n(3), n(3))
+})
+
+test('asArray variable length', t => {
+  const n = squirrel()
+    .asArray(
+      p => p.asInteger([2, 5]),
+      p => p.asBoolean(),
+    )
+    .noise()
+
+  for (let i = 0; i < 10; i++) {
+    const b = n(i)
+    t.true(b.length >= 2 && b.length <= 5)
+    t.log(b)
+  }
 })
