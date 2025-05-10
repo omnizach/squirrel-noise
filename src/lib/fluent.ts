@@ -29,7 +29,7 @@ interface NoiseOptions<TOut> {
 interface NoiseInput<TOut> {
   input(fn: (...x: number[]) => number): NoiseFluentResult<TOut>
   dimensions(value: Dimension): NoiseFluentResult<TOut>
-  fromIncrement(start: number): NoiseFluentResult<TOut>
+  sequence(start: number): NoiseFluentResult<TOut>
 }
 
 interface NoiseFluent<TOut> {
@@ -193,8 +193,8 @@ class Noise<TOut>
     })
   }
 
-  fromIncrement(): NoiseFluentResult<TOut> {
-    let i = 0
+  sequence(start: number = 0): NoiseFluentResult<TOut> {
+    let i = start
     return this.input(() => i++)
   }
 
@@ -336,7 +336,7 @@ class Noise<TOut>
       return this.asInteger([1, ds])
     }
 
-    const ss = this.clone().fromIncrement().seed(this.generateSeed()).asNumber().noise(),
+    const ss = this.clone().sequence().seed(this.generateSeed()).asNumber().noise(),
       ns = ds.map(d => this.asInteger([1, d]).seed(ss()).noise())
 
     return this.asNumber().map(x => ns.map(n => n(x)).reduce((p, c) => p + c, 0))

@@ -269,7 +269,7 @@ test('noise discrete range', t => {
 })
 
 test('noise generator produces sequence with no input', t => {
-  const ng = squirrel().fromIncrement().noise()
+  const ng = squirrel().sequence().noise()
 
   const prev = NaN
 
@@ -279,7 +279,7 @@ test('noise generator produces sequence with no input', t => {
 })
 
 test('noise range is valid', t => {
-  const nb = squirrel().fromIncrement().asNumber([0, 10]),
+  const nb = squirrel().sequence().asNumber([0, 10]),
     ng = nb.noise()
 
   let min = 10,
@@ -298,7 +298,7 @@ test('noise range is valid', t => {
 })
 
 test('noise discrete range is indexable and fair', t => {
-  const ng = squirrel().fromIncrement().asInteger([-2, 7]).noise()
+  const ng = squirrel().sequence().asInteger([-2, 7]).noise()
 
   const counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -328,7 +328,7 @@ test.serial('general performance is fast', t => {
 
   const testStart = Date.now()
 
-  const n = squirrel().fromIncrement().asNumber([0, 1]).noise() // using some typical options that add time
+  const n = squirrel().sequence().asNumber([0, 1]).noise() // using some typical options that add time
 
   for (let i = 0; i < 1e7; i++) {
     n()
@@ -430,7 +430,7 @@ test('noiseVect2D random seed is *in*consistent at generation time', t => {
 
 test('randomNumber range', t => {
   const rn = squirrel()
-    .fromIncrement()
+    .sequence()
     .seed(20)
     .asVect2D([
       [-1000, 1000],
@@ -480,7 +480,7 @@ test('asVect3D random seed is *in*consistent at generation time', t => {
 
 test('asVect3D range', t => {
   const rn = squirrel()
-    .fromIncrement()
+    .sequence()
     .seed(30)
     .asVect3D([
       [-1000, 1000],
@@ -541,7 +541,7 @@ test('asSphere is on unit unit sphere', t => {
 })
 
 test('asSphere averages to origin (no bias)', t => {
-  const nv = squirrel().fromIncrement().seed(1).asSphere().noise()
+  const nv = squirrel().sequence().seed(1).asSphere().noise()
   /*const nv = squirrel()
     .fromIncrement()
     //.seed(1)
@@ -585,7 +585,7 @@ test('asSphere averages to origin (no bias)', t => {
 })
 
 test('asSphere axes are evenly spread', t => {
-  const nv = squirrel().fromIncrement().asSphere().noise()
+  const nv = squirrel().sequence().asSphere().noise()
 
   const brown: [number, number, number] = [0, 0, 0]
 
@@ -620,7 +620,7 @@ test('asDisc', t => {
 })
 
 test('asDisc uniform', t => {
-  const rn = squirrel().fromIncrement().seed(123).asDisc().noise(),
+  const rn = squirrel().sequence().seed(123).asDisc().noise(),
     ds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
   for (let i = 0; i < 100000; i++) {
@@ -661,7 +661,7 @@ test('asBall vectors in range,', t => {
 })
 
 test('asBall uniform', t => {
-  const rn = squirrel().fromIncrement().seed(123).asBall(10).noise(),
+  const rn = squirrel().sequence().seed(123).asBall(10).noise(),
     ds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
   for (let i = 0; i < 100000; i++) {
@@ -681,7 +681,7 @@ test('asBall uniform', t => {
 })
 
 test('asBall uniform inner radius', t => {
-  const rn = squirrel().fromIncrement().seed(123).asBall([10, 20]).noise(),
+  const rn = squirrel().sequence().seed(123).asBall([10, 20]).noise(),
     ds = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
   for (let i = 0; i < 100000; i++) {
@@ -702,7 +702,7 @@ test('asBall uniform inner radius', t => {
 
 test('asList is fair', t => {
   const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')
-  const nl = squirrel().fromIncrement().asList(letters).noise()
+  const nl = squirrel().sequence().asList(letters).noise()
 
   const counts: any = {} // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -788,7 +788,7 @@ test('asList weights default to 1', t => {
 
 test('asList weights ignored if empty', t => {
   const letters = 'abcdefghijklmnopqrstuvwxyz'.split('')
-  const nl = squirrel().fromIncrement().asList(letters, []).noise()
+  const nl = squirrel().sequence().asList(letters, []).noise()
 
   const counts: any = {} // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -804,7 +804,7 @@ test('asList weights ignored if empty', t => {
 })
 
 test('asGaussian defaults', t => {
-  const n = squirrel().fromIncrement().asGuassian().noise()
+  const n = squirrel().sequence().asGuassian().noise()
 
   const counts = [0, 0, 0]
 
@@ -836,7 +836,7 @@ test('asGaussian defaults', t => {
 })
 
 test('asGaussian mean and stdev', t => {
-  const n = squirrel().fromIncrement().asGuassian(10, 2).noise()
+  const n = squirrel().sequence().asGuassian(10, 2).noise()
 
   const counts = [0, 0, 0]
 
