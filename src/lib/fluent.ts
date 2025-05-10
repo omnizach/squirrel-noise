@@ -12,6 +12,8 @@ type OutputArg = any // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export type NoiseOutputFn<TOut> = (x: number) => TOut
 
+type Range = [number, number] | undefined
+
 interface NoiseOptions<TOut> {
   input?: (...x: number[]) => number
   output: NoiseOutputFn<TOut>
@@ -33,41 +35,36 @@ interface NoiseInput<TOut> {
 interface NoiseFluent<TOut> {
   seed(value: Seed): NoiseFluentResult<TOut>
   onSeeding(cb: (s: number) => void): NoiseFluentResult<TOut>
-  transform(fn: (x: number) => number): NoiseFluentResult<TOut>
-  tuple(): NoiseTupleFluent<TOut, []>
 }
 
-interface NoiseOutput {
+interface NoiseOutput<TOut> {
   output<TOutNext>(value: (x: number) => TOutNext): NoiseFinal<TOutNext>
   asBoolean(): NoiseFinal<boolean>
-  asNumber(range?: [number, number]): NoiseFinal<number>
-  asInteger(range?: [number, number]): NoiseFinal<number>
-  asVect2D(range?: [[number, number] | undefined, [number, number] | undefined]): NoiseFinal<[number, number]>
-  asVect3D(
-    range?: [[number, number] | undefined, [number, number] | undefined, [number, number] | undefined],
-  ): NoiseFinal<[number, number, number]>
-  asCircle(radius?: number, angleRange?: [number, number]): NoiseFinal<[number, number]>
+  asNumber(range?: Range): NoiseFinal<number>
+  asInteger(range?: Range): NoiseFinal<number>
+  asVect2D(range?: [Range, Range]): NoiseFinal<[number, number]>
+  asVect3D(range?: [Range, Range, Range]): NoiseFinal<[number, number, number]>
+  asCircle(radius?: number, angleRange?: Range): NoiseFinal<[number, number]>
   asSphere(radius?: number): NoiseFinal<[number, number, number]>
-  asDisc(radius?: [number, number] | number, angleRange?: [number, number]): NoiseFinal<[number, number]>
-  asBall(radius?: number | [number, number]): NoiseFinal<[number, number, number]>
+  asDisc(radius?: Range | number, angleRange?: Range): NoiseFinal<[number, number]>
+  asBall(radius?: number | Range): NoiseFinal<[number, number, number]>
   asList<T>(items: T[], weights?: number[]): NoiseFinal<T>
-  asGuassian(mean?: number, stdev?: number, clamp?: [number, number]): NoiseFinal<[number, number]>
-  asPoisson(lambda?: number, clamp?: [number, number]): NoiseFinal<number>
+  asGuassian(mean?: number, stdev?: number, clamp?: Range): NoiseFinal<[number, number]>
+  asPoisson(lambda?: number, clamp?: Range): NoiseFinal<number>
   asDice(ds?: number | number[]): NoiseFinal<number>
+  asArray<T>(length: number | NoiseFunctor<number, TOut>, nfn: NoiseFunctor<T, TOut>): NoiseFinal<T[]>
 }
 
 type NoiseTupleOut<T extends ReadonlyArray<NoiseFinal<OutputArg>>> = {
   [K in keyof T]: T[K] extends NoiseFinal<infer V> ? V : never
 }
 
-//type NoiseTupleFunctorOut<T extends ReadonlyArray<NoiseFunctor<OutputArg, any>>> = {
-//  [K in keyof T]: T[K] extends NoiseFunctor<infer V, any> ? V : never
-//}
+type NoiseTupleFunctorOut<TParentOut, T extends ReadonlyArray<NoiseFunctor<OutputArg, TParentOut>>> = {
+  [K in keyof T]: T[K] extends NoiseFunctor<infer V, TParentOut> ? V : never
+}
 
-interface NoiseTupleFluent<TParentOut, TNs extends ReadonlyArray<NoiseFinal<OutputArg>>> {
-  element<TOutNext>(nb: NoiseFunctor<TOutNext, TParentOut>): NoiseTupleFluent<TParentOut, [...TNs, Noise<TOutNext>]>
-  output(): NoiseFinal<NoiseTupleOut<TNs>>
-  output<TOut>(fn: (t: NoiseTupleOut<TNs>) => TOut): NoiseFinal<TOut>
+type NoiseTupleFunctorResult<TParentOut, T extends ReadonlyArray<NoiseFunctor<OutputArg, TParentOut>>> = {
+  [K in keyof T]: T[K] extends NoiseFunctor<infer V, TParentOut> ? NoiseFinal<V> : never
 }
 
 interface NoiseProps<TOut> {
@@ -85,13 +82,15 @@ interface NoiseExecution<TOut> {
 
 type NoiseFinal<TOut> = NoiseProps<TOut> & NoiseExecution<TOut>
 
-type NoiseFluentResult<TOut> = NoiseFluent<TOut> & NoiseProps<TOut> & NoiseExecution<TOut> & NoiseOutput
+type NoiseFluentResult<TOut> = NoiseFluent<TOut> & NoiseProps<TOut> & NoiseExecution<TOut> & NoiseOutput<TOut>
 
 type NoiseFunctor<TOutNext, TParentOut> = NoiseFinal<TOutNext> | ((parent: Noise<TParentOut>) => NoiseFinal<TOutNext>)
 
 //#endregion
 
-class Noise<TOut> implements NoiseInput<TOut>, NoiseFluent<TOut>, NoiseOutput, NoiseExecution<TOut>, NoiseProps<TOut> {
+class Noise<TOut>
+  implements NoiseInput<TOut>, NoiseFluent<TOut>, NoiseOutput<TOut>, NoiseExecution<TOut>, NoiseProps<TOut>
+{
   protected static numberFuncIdentity = (x: number) => x
 
   //#region utils
@@ -207,79 +206,61 @@ class Noise<TOut> implements NoiseInput<TOut>, NoiseFluent<TOut>, NoiseOutput, N
     return Noise.factory<T>({ ...this.options, output: fn })
   }
 
-  tuple(): NoiseTupleBuilder<TOut, []> {
-    return NoiseTupleBuilder.create(this)
-  }
-
   asBoolean(): Noise<boolean> {
     return this.output(x => !(x & 1))
   }
 
-  asNumber(range?: [number, number]): Noise<number> {
+  asNumber(range?: Range): Noise<number> {
     return range ? this.map().map(Noise.range(range)) : this.map()
   }
 
-  asInteger(range?: [number, number]): Noise<number> {
+  asInteger(range?: Range): Noise<number> {
     return this.asNumber(range ? [range[0], range[1] + 1] : undefined).map(Math.floor)
   }
 
-  asVect2D(
-    [rx, ry]: [[number, number] | undefined, [number, number] | undefined] = [undefined, undefined],
-  ): NoiseFinal<[number, number]> {
-    return this.tuple()
-      .element(n => n.asNumber(rx))
-      .element(n => n.asNumber(ry))
-      .output()
+  asVect2D([rx, ry]: [Range, Range] = [undefined, undefined]): NoiseFinal<[number, number]> {
+    return this.asTuple(
+      n => n.asNumber(rx),
+      n => n.asNumber(ry),
+    )
   }
 
   asVect3D(
-    [rx, ry, rz]: [[number, number] | undefined, [number, number] | undefined, [number, number] | undefined] = [
-      undefined,
-      undefined,
-      undefined,
-    ],
+    [rx, ry, rz]: [Range, Range, Range] = [undefined, undefined, undefined],
   ): NoiseFinal<[number, number, number]> {
-    return this.tuple()
-      .element(n => n.asNumber(rx))
-      .element(n => n.asNumber(ry))
-      .element(n => n.asNumber(rz))
-      .output()
+    return this.asTuple(
+      n => n.asNumber(rx),
+      n => n.asNumber(ry),
+      n => n.asNumber(rz),
+    )
   }
 
-  asCircle(radius: number = 1, angleRange: [number, number] = [0, 2 * Math.PI]): NoiseFinal<[number, number]> {
+  asCircle(radius: number = 1, angleRange: Range = [0, 2 * Math.PI]): NoiseFinal<[number, number]> {
     return this.asNumber(angleRange).map(a => [radius * Math.cos(a), radius * Math.sin(a)])
   }
 
   asSphere(radius: number = 1): NoiseFinal<[number, number, number]> {
-    return this.tuple()
-      .element(n => n.asNumber([0, 2 * Math.PI]))
-      .element(n => n.asNumber([-1, 1]))
-      .output()
-      .map(([θ, r]) => {
-        const z = Math.sqrt(1 - r ** 2)
-        return [z * Math.cos(θ) * radius, z * Math.sin(θ) * radius, r * radius]
-      })
+    return this.asTuple(
+      n => n.asNumber([0, 2 * Math.PI]),
+      n => n.asNumber([-1, 1]),
+    ).map(([θ, r]) => {
+      const z = Math.sqrt(1 - r ** 2)
+      return [z * Math.cos(θ) * radius, z * Math.sin(θ) * radius, r * radius]
+    })
   }
 
-  asDisc(
-    radius: [number, number] | number = 1,
-    angleRange: [number, number] = [0, 2 * Math.PI],
-  ): NoiseFinal<[number, number]> {
-    return this.tuple()
-      .element(n => n.asCircle(1, angleRange))
-      .element(n =>
-        n.asNumber(Array.isArray(radius) ? [radius[0] ** 2, radius[1] ** 2] : [0, radius ** 2]).output(Math.sqrt),
-      )
-      .output(([[x, y], r]) => [x * r, y * r])
+  asDisc(radius: Range | number = 1, angleRange: Range = [0, 2 * Math.PI]): NoiseFinal<[number, number]> {
+    return this.asTuple(
+      this.asCircle(1, angleRange),
+      this.asNumber(Array.isArray(radius) ? [radius[0] ** 2, radius[1] ** 2] : [0, radius ** 2]).map(Math.sqrt),
+    ).map(([[x, y], r]) => [x * r, y * r])
   }
 
-  asBall(radius: number | [number, number] = 1): NoiseFinal<[number, number, number]> {
-    return this.tuple()
-      .element(n => n.asSphere())
-      .element(n =>
-        n.asNumber(Array.isArray(radius) ? [radius[0] ** 3, radius[1] ** 3] : [0, radius ** 3]).output(Math.cbrt),
-      )
-      .output(([[x, y, z], r]) => [x * r, y * r, z * r])
+  asBall(radius: number | Range = 1): NoiseFinal<[number, number, number]> {
+    return this.asTuple(
+      n => n.asSphere(),
+      n => n.asNumber(Array.isArray(radius) ? [radius[0] ** 3, radius[1] ** 3] : [0, radius ** 3]).map(Math.cbrt),
+    ).map(([[x, y, z], r]) => [x * r, y * r, z * r])
   }
 
   asList<T>(items: T[], weights?: number[]): NoiseFinal<T> {
@@ -311,17 +292,17 @@ class Noise<TOut> implements NoiseInput<TOut>, NoiseFluent<TOut>, NoiseOutput, N
    * will be bimodal at the clamp values.
    * @returns
    */
-  asGuassian(mean: number = 0, stdev: number = 1, clamp?: [number, number]): NoiseFinal<[number, number]> {
+  asGuassian(mean: number = 0, stdev: number = 1, clamp?: Range): NoiseFinal<[number, number]> {
     const c = clamp ? (x: number) => (x < clamp[0] ? clamp[0] : x > clamp[1] ? clamp[1] : x) : null
 
-    return this.tuple()
-      .element(n => n.asNumber([0, 2 * Math.PI]))
-      .element(n => n.asNumber([0, 1]).output(x => stdev * Math.sqrt(-2 * Math.log(x))))
-      .output(
-        c
-          ? ([a, b]) => [c(b * Math.cos(a) + mean), c(b * Math.sin(a) + mean)] as [number, number]
-          : ([a, b]) => [b * Math.cos(a) + mean, b * Math.sin(a) + mean] as [number, number],
-      )
+    return this.asTuple(
+      n => n.asNumber([0, 2 * Math.PI]),
+      n => n.asNumber([0, 1]).map(x => stdev * Math.sqrt(-2 * Math.log(x))),
+    ).map(
+      c
+        ? ([a, b]) => [c(b * Math.cos(a) + mean), c(b * Math.sin(a) + mean)] as [number, number]
+        : ([a, b]) => [b * Math.cos(a) + mean, b * Math.sin(a) + mean] as [number, number],
+    )
   }
 
   /**
@@ -329,7 +310,7 @@ class Noise<TOut> implements NoiseInput<TOut>, NoiseFluent<TOut>, NoiseOutput, N
    * @param lambda expectation parameter. This implementation only uses Devroye, therefore large values of lambda will perform poorly.
    * Lambda > 30 throws an exception. Default 1.
    */
-  asPoisson(lambda: number = 1, clamp?: [number, number]): NoiseFinal<number> {
+  asPoisson(lambda: number = 1, clamp?: Range): NoiseFinal<number> {
     if (lambda < 0 || lambda > 30) {
       throw Error(`Poisson algorithm requires lambda in the range (0, 30). Lambda = ${lambda}`)
     }
@@ -355,7 +336,8 @@ class Noise<TOut> implements NoiseInput<TOut>, NoiseFluent<TOut>, NoiseOutput, N
       return this.asInteger([1, ds])
     }
 
-    const ns = ds.map(d => this.asInteger([1, d]).seed('generate').noise())
+    const ss = this.clone().fromIncrement().seed(this.generateSeed()).asNumber().noise(),
+      ns = ds.map(d => this.asInteger([1, d]).seed(ss()).noise())
 
     return this.asNumber().map(x => ns.map(n => n(x)).reduce((p, c) => p + c, 0))
   }
@@ -367,18 +349,17 @@ class Noise<TOut> implements NoiseInput<TOut>, NoiseFluent<TOut>, NoiseOutput, N
         typeof length === 'function'
           ? length(this.clone()).noise()
           : length instanceof Noise
-            ? length
-                .clone()
-                .input((x: number) => x)
-                .noise()
+            ? length.clone().input(Noise.numberFuncIdentity).noise()
             : () => length
 
     return nb.map().map(x => [...Array(Math.floor(lfn(x))).keys()].map((_x, i) => n(x + i * 999_999_937)))
   }
 
-  //asTuple<TNs extends ReadonlyArray<NoiseFunctor<OutputArg, TOut>>>(...nfns: TNs): NoiseFinal<NoiseTupleFunctorOut<TNs>> {
-  //  return new NoiseTuple<NoiseTupleFunctorOut<TNs>>(this, nfns)
-  //}
+  asTuple<TNs extends ReadonlyArray<NoiseFunctor<OutputArg, TOut>>>(
+    ...ns: TNs
+  ): Noise<NoiseTupleFunctorOut<TOut, TNs>> {
+    return new NoiseTuple(this, tupleFunctor(this, ns)) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+  }
 
   //#endregion
 
@@ -398,15 +379,6 @@ class Noise<TOut> implements NoiseInput<TOut>, NoiseFluent<TOut>, NoiseOutput, N
 
   onSeeding(cb: (s: number) => void): Noise<TOut> {
     return Noise.factory({ ...this.options, onSeeding: cb })
-  }
-
-  transform(fn: (x: number) => number): Noise<TOut> {
-    if (!this.options.transform) {
-      return Noise.factory({ ...this.options, transform: fn })
-    }
-
-    const pfn = this.options.transform
-    return Noise.factory({ ...this.options, transform: (x: number) => fn(pfn(x)) })
   }
 
   map(): Noise<number>
@@ -543,14 +515,29 @@ class NoiseBuilderLerp<TOut> extends Noise<TOut> {
 
 const tuple = <T extends OutputArg[]>(...t: T) => t
 
+function nameFunction<T>(name: string, body: () => T) {
+  return {
+    [name]() {
+      return body.apply(this)
+    },
+  }[name]
+}
+
 function tupleNoise<TNs extends ReadonlyArray<NoiseFinal<OutputArg>>>(ns: TNs): (...x: number[]) => NoiseTupleOut<TNs> {
-  const fns = ns.map(n => n.noise())
+  const fns = ns.map((n, i) => nameFunction(`f${i}`, () => n.noise())())
   return (...x: number[]) => fns.map(f => f(...x)) as any // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 function tupleOutput<TNs extends ReadonlyArray<NoiseFinal<OutputArg>>>(ns: TNs): (x: number) => NoiseTupleOut<TNs> {
   const outs = ns.map(n => n.outputFn)
   return (x: number) => outs.map(o => o(x)) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
+function tupleFunctor<TParentOut, TNs extends ReadonlyArray<NoiseFunctor<OutputArg, TParentOut>>>(
+  parent: NoiseFinal<TParentOut>,
+  ns: TNs,
+): NoiseTupleFunctorResult<TParentOut, TNs> {
+  return ns.map(n => (typeof n === 'function' ? n(parent.clone()) : n)) as any // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 class NoiseTuple<TNs extends ReadonlyArray<NoiseFinal<OutputArg>>> extends Noise<NoiseTupleOut<TNs>> {
@@ -586,12 +573,25 @@ class NoiseTuple<TNs extends ReadonlyArray<NoiseFinal<OutputArg>>> extends Noise
 
 class NoiseTupleWithOutput<TNs extends ReadonlyArray<NoiseFinal<OutputArg>>, TOut> extends Noise<TOut> {
   constructor(
-    parent: Noise<unknown>,
+    private parent: Noise<unknown>,
     private ns: TNs,
     private out: (xs: NoiseTupleOut<TNs>) => TOut,
   ) {
     const outTuple = tupleOutput(tuple(...ns))
     super({ input: parent.inputFn, output: (x: number) => out(outTuple(x)) })
+  }
+
+  map(): Noise<number>
+  map<TOutNext>(fn: (x: TOut) => TOutNext): Noise<TOutNext>
+  map<TOutNext>(fn?: (x: TOut) => TOutNext): Noise<number> | Noise<TOutNext> {
+    if (!fn) {
+      return Noise.factory({ ...this.options, output: Noise.numberFuncIdentity })
+    }
+
+    const outFn = this.out,
+      newOut = (x: NoiseTupleOut<TNs>) => fn(outFn(x))
+
+    return new NoiseTupleWithOutput<TNs, TOutNext>(this.parent, this.ns, newOut)
   }
 
   noise(): (...x: number[]) => TOut {
@@ -605,40 +605,6 @@ class NoiseTupleWithOutput<TNs extends ReadonlyArray<NoiseFinal<OutputArg>>, TOu
     for (let i = 0; i < stop; i += step) {
       yield n(i)
     }
-  }
-}
-
-class NoiseTupleBuilder<TParentOut, TNs extends ReadonlyArray<NoiseFinal<OutputArg>>>
-  implements NoiseTupleFluent<TParentOut, TNs>, NoiseExecution<NoiseTupleOut<TNs>>
-{
-  static create<TP>(parent: Noise<TP>): NoiseTupleBuilder<TP, []> {
-    return new NoiseTupleBuilder<TP, []>(parent, [])
-  }
-
-  constructor(
-    private parent: Noise<TParentOut>,
-    private ns: TNs,
-  ) {}
-
-  element<TOutNext>(
-    nb: NoiseFunctor<TOutNext, TParentOut>,
-  ): NoiseTupleBuilder<TParentOut, [...TNs, NoiseFinal<TOutNext>]> {
-    const n = typeof nb === 'function' ? nb(this.parent.clone()) : nb
-    return new NoiseTupleBuilder(this.parent, [...this.ns, n])
-  }
-
-  output(): NoiseFinal<NoiseTupleOut<TNs>>
-  output<TOut>(fn: (t: NoiseTupleOut<TNs>) => TOut): NoiseFinal<TOut>
-  output<TOut>(fn?: (t: NoiseTupleOut<TNs>) => TOut): NoiseFinal<NoiseTupleOut<TNs>> | NoiseFinal<TOut> {
-    return fn ? new NoiseTupleWithOutput(this.parent, this.ns, fn) : new NoiseTuple(this.parent, this.ns)
-  }
-
-  noise(): (...x: number[]) => NoiseTupleOut<TNs> {
-    return this.output().noise()
-  }
-
-  *generator(stop = Infinity, step = 1): IterableIterator<NoiseTupleOut<TNs>> {
-    yield* this.output().generator(stop, step)
   }
 }
 
