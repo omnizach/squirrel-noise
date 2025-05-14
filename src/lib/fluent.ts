@@ -545,17 +545,45 @@ class NoiseArray<TOut, TParentOut> extends Noise<TOut[]> {
     super({ output: () => [] }) // degenerate implementation, not used
   }
 
+  private get lengthFn() {
+    return typeof this.length === 'function'
+      ? this.length(this.parent.clone()).noise()
+      : this.length instanceof Noise
+        ? this.length.clone().input(Noise.numberFuncIdentity).noise()
+        : () => this.length
+  }
+
+  private *lengthGen(): IterableIterator<number> {
+    if (typeof this.length === 'function') {
+      yield* this.length(this.parent.clone()).generator()
+      return
+    }
+
+    if (this.length instanceof Noise) {
+      yield* this.length.generator()
+      return
+    }
+
+    while (true) {
+      yield this.length as number
+    }
+  }
+
   noise(): (...x: number[]) => TOut[] {
     const n = (typeof this.noiseFn === 'function' ? this.noiseFn(this.parent.clone()) : this.noiseFn).noise(),
-      lfn =
-        typeof this.length === 'function'
-          ? this.length(this.parent.clone()).noise()
-          : this.length instanceof Noise
-            ? this.length.clone().input(Noise.numberFuncIdentity).noise()
-            : () => this.length
+      lfn = this.lengthFn
 
     return (x0: number, ...x: number[]) =>
       [...Array(lfn(x0, ...x)).keys()].map((_x, i) => n(x0 + i * 999_999_937, ...x))
+  }
+
+  *generator(stop = Infinity, step = 1): IterableIterator<TOut[]> {
+    const g = (typeof this.noiseFn === 'function' ? this.noiseFn(this.parent.clone()) : this.noiseFn).generator(),
+      lg = this.lengthGen()
+
+    for (let i = 0; i < stop; i += step) {
+      yield [...Array(lg.next().value).keys()].map(() => g.next().value)
+    }
   }
 }
 
