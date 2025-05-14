@@ -10,6 +10,8 @@ type OptionalNumberFn = ((x: number) => number) | undefined | null
 
 type OutputArg = any // eslint-disable-line @typescript-eslint/no-explicit-any
 
+type InferredResult = any // eslint-disable-line @typescript-eslint/no-explicit-any
+
 export type NoiseOutputFn<TOut> = (x: number) => TOut
 
 type Range = [number, number] | undefined
@@ -57,6 +59,7 @@ interface NoiseOutput<TOut> {
   asTuple<TNs extends ReadonlyArray<NoiseFunctor<OutputArg, TOut>>>(
     ...ns: TNs
   ): NoiseFinal<NoiseTupleFunctorOut<TOut, TNs>>
+  asObject<T extends NoiseFunctorObject<OutputArg, TOut>>(nf: T): NoiseFinal<NoiseObjectFunctorOut<TOut, T>>
 }
 
 type NoiseTupleOut<T extends ReadonlyArray<NoiseFinal<OutputArg>>> = {
@@ -69,6 +72,14 @@ type NoiseTupleFunctorOut<TParentOut, T extends ReadonlyArray<NoiseFunctor<Outpu
 
 type NoiseTupleFunctorResult<TParentOut, T extends ReadonlyArray<NoiseFunctor<OutputArg, TParentOut>>> = {
   [K in keyof T]: T[K] extends NoiseFunctor<infer V, TParentOut> ? NoiseFinal<V> : never
+}
+
+interface NoiseFunctorObject<OutputArg, TParentOut> {
+  [k: string]: NoiseFunctor<OutputArg, TParentOut>
+}
+
+type NoiseObjectFunctorOut<TParentOut, T extends NoiseFunctorObject<OutputArg, TParentOut>> = {
+  [K in keyof T]: T[K] extends NoiseFunctor<infer V, TParentOut> ? V : never
 }
 
 interface NoiseProps<TOut> {
@@ -348,19 +359,6 @@ class Noise<TOut>
   }
 
   asArray<T>(length: number | NoiseFunctor<number, TOut>, nfn: NoiseFunctor<T, TOut>): NoiseFinal<T[]> {
-    /*
-    const nb = typeof nfn === 'function' ? nfn(this.clone()) : nfn,
-      n = nb.noise(),
-      lfn =
-        typeof length === 'function'
-          ? length(this.clone()).noise()
-          : length instanceof Noise
-            ? length.clone().input(Noise.numberFuncIdentity).noise()
-            : () => length
-
-    return nb.map().map(x => [...Array(Math.floor(lfn(x))).keys()].map((_x, i) => n(x + i * 999_999_937)))
-    */
-
     return new NoiseArray(this, length, nfn)
   }
 
@@ -370,13 +368,16 @@ class Noise<TOut>
     return new NoiseTuple(this, tupleFunctor(this, ns)) as any // eslint-disable-line @typescript-eslint/no-explicit-any
   }
 
-  /*
-  asObject<TNs extends ReadonlyArray<NoiseFunctor<OutputArg, TOut>>>(
-    ...ns: TNs
-  ): Noise<Object> {
-
+  asObject<T extends NoiseFunctorObject<OutputArg, TOut>>(nf: T): Noise<NoiseObjectFunctorOut<TOut, T>> {
+    const ps = Object.entries(nf)
+    return new NoiseTuple(
+      this,
+      tupleFunctor(
+        this,
+        ps.map(([, v]) => v),
+      ),
+    ).map(t => Object.fromEntries(ps.map(([k], i) => [k, t[i]]))) as InferredResult
   }
-  */
 
   //#endregion
 
@@ -601,19 +602,19 @@ function nameFunction<T>(name: string, body: () => T) {
 
 function tupleNoise<TNs extends ReadonlyArray<NoiseFinal<OutputArg>>>(ns: TNs): (...x: number[]) => NoiseTupleOut<TNs> {
   const fns = ns.map((n, i) => nameFunction(`f${i}`, () => n.noise())())
-  return (...x: number[]) => fns.map(f => f(...x)) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+  return (...x: number[]) => fns.map(f => f(...x)) as InferredResult
 }
 
 function tupleOutput<TNs extends ReadonlyArray<NoiseFinal<OutputArg>>>(ns: TNs): (x: number) => NoiseTupleOut<TNs> {
   const outs = ns.map(n => n.outputFn)
-  return (x: number) => outs.map(o => o(x)) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+  return (x: number) => outs.map(o => o(x)) as InferredResult
 }
 
 function tupleFunctor<TParentOut, TNs extends ReadonlyArray<NoiseFunctor<OutputArg, TParentOut>>>(
   parent: NoiseFinal<TParentOut>,
   ns: TNs,
 ): NoiseTupleFunctorResult<TParentOut, TNs> {
-  return ns.map(n => (typeof n === 'function' ? n(parent.clone()) : n)) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+  return ns.map(n => (typeof n === 'function' ? n(parent.clone()) : n)) as InferredResult
 }
 
 class NoiseTuple<TNs extends ReadonlyArray<NoiseFinal<OutputArg>>> extends Noise<NoiseTupleOut<TNs>> {

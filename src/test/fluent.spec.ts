@@ -978,6 +978,18 @@ test('asArray variable length', t => {
   ls.map(len => t.true(800 <= len && len <= 1200))
 })
 
+test('asArray Generator', t => {
+  const g = squirrel()
+    .asArray(3, p => p.asNumber([1, 10]))
+    .generator(100)
+
+  for (const a of g) {
+    t.is(a.length, 3)
+    t.notDeepEqual(a[0], a[1])
+    t.true(1 <= a[2] && a[2] <= 10)
+  }
+})
+
 test('tuple double map', t => {
   const s = squirrel()
     .asTuple(
@@ -1027,5 +1039,21 @@ test('tuple lerp asArray is smooth', t => {
     for (let j = 0; j < 5; j++) {
       t.true(a0[j] < a1[j] ? a0[j] < a[j] && a[j] < a1[j] : a0[j] > a[j] && a[j] > a1[j])
     }
+  }
+})
+
+test('asObject basic', t => {
+  const n = squirrel()
+    .asObject({
+      width: p => p.asNumber([1, 5]),
+      height: p => p.asNumber([6, 10]),
+    })
+    .noise()
+
+  for (let i = 0; i < 10; i++) {
+    const { width, height } = n(i)
+
+    t.true(1 <= width && width <= 5)
+    t.true(6 <= height && height <= 10)
   }
 })
