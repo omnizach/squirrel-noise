@@ -992,3 +992,40 @@ test('tuple double map', t => {
     t.true(0 <= s(i) && s(i) <= 100)
   }
 })
+
+test('tuple lerp is smooth', t => {
+  const n = squirrel()
+    .lerp(1)
+    .asTuple(
+      p => p.asNumber([-10, 10]),
+      p => p.asNumber([-1, 1]),
+    )
+    .noise()
+
+  for (let i = 0; i < 10; i++) {
+    const [x0, y0] = n(i),
+      [x, y] = n(i + 0.5),
+      [x1, y1] = n(i + 1)
+    t.true(x0 < x1 ? x0 < x && x < x1 : x0 > x && x > x1)
+    t.true(y0 < y1 ? y0 < y && y < y1 : y0 > y && y > y1)
+  }
+})
+
+test('tuple lerp asArray is smooth', t => {
+  const n = squirrel()
+    .lerp(1)
+    .asArray(5, p => p.asNumber([0, 10]))
+    .noise()
+
+  for (let i = 0; i < 10; i++) {
+    const a0 = n(i),
+      a = n(i + 0.5),
+      a1 = n(i + 1)
+
+    //t.log(a0, a, a1)
+
+    for (let j = 0; j < 5; j++) {
+      t.true(a0[j] < a1[j] ? a0[j] < a[j] && a[j] < a1[j] : a0[j] > a[j] && a[j] > a1[j])
+    }
+  }
+})
