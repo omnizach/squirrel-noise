@@ -554,7 +554,7 @@ class NoiseArray<TOut, TParentOut> extends Noise<TOut[]> {
       lfn = this.lengthFn
 
     return (x0: number, ...x: number[]) =>
-      [...Array(lfn(x0, ...x)).keys()].map((_x, i) => n(x0 + i * 999_999_937, ...x))
+      [...Array(Math.floor(lfn(x0, ...x))).keys()].map((_x, i) => n(x0 + i * 999_999_937, ...x))
   }
 
   *generator(stop = Infinity, step = 1): IterableIterator<TOut[]> {
@@ -562,7 +562,7 @@ class NoiseArray<TOut, TParentOut> extends Noise<TOut[]> {
       lg = this.lengthGen()
 
     for (let i = 0; i < stop; i += step) {
-      yield [...Array(lg.next().value).keys()].map(() => g.next().value)
+      yield [...Array(Math.floor(lg.next().value)).keys()].map(() => g.next().value)
     }
   }
 }
