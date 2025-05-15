@@ -6,8 +6,6 @@ export type Lerp = false | 1 | 2 | 3
 
 export type Seed = number | 'random' | 'generate' | 'declaration'
 
-type OptionalNumberFn = ((x: number) => number) | undefined | null
-
 type OutputArg = any // eslint-disable-line @typescript-eslint/no-explicit-any
 
 type InferredResult = any // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -21,9 +19,7 @@ interface NoiseOptions<TOut> {
   output: NoiseOutputFn<TOut>
   seed?: Seed
   onSeeding?: (s: number) => void
-  transform?: (x: number) => number
   lerp?: Lerp
-  name?: string
 }
 
 //#region Noise Interfaces
@@ -37,7 +33,6 @@ interface NoiseInput<TOut> {
 interface NoiseFluent<TOut> {
   seed(value: Seed): NoiseFluentResult<TOut>
   onSeeding(cb: (s: number) => void): NoiseFluentResult<TOut>
-  named(value: string): NoiseFluentResult<TOut>
 }
 
 interface NoiseOutput<TOut> {
@@ -88,12 +83,11 @@ interface NoiseProps<TOut> {
   clone(): Noise<TOut>
   map(): NoiseFinal<number>
   map<TOutNext>(fn: (x: TOut) => TOutNext): NoiseFinal<TOutNext>
-  name?: string
 }
 
 interface NoiseExecution<TOut> {
   noise(): (...x: number[]) => TOut
-  generator(length?: number, step?: number): IterableIterator<TOut>
+  generator(stop?: number, step?: number): IterableIterator<TOut>
 }
 
 type NoiseFinal<TOut> = NoiseProps<TOut> & NoiseExecution<TOut>
@@ -107,22 +101,9 @@ type NoiseFunctor<TOutNext, TParentOut> = NoiseFinal<TOutNext> | ((parent: Noise
 class Noise<TOut>
   implements NoiseInput<TOut>, NoiseFluent<TOut>, NoiseOutput<TOut>, NoiseExecution<TOut>, NoiseProps<TOut>
 {
-  protected static numberFuncIdentity = (x: number) => x
+  protected static identityNumberFn = (x: number) => x
 
   //#region utils
-
-  protected static numberPipe = (fn1?: OptionalNumberFn, ...rest: OptionalNumberFn[]): ((x: number) => number) => {
-    if (!rest?.length) {
-      return fn1 ?? Noise.numberFuncIdentity
-    }
-
-    if (!fn1) {
-      return Noise.numberPipe(...rest)
-    }
-
-    const np = Noise.numberPipe(...rest)
-    return (x: number) => np(fn1(x))
-  }
 
   protected static seedGenerator = (() => {
     let i = 0
@@ -133,18 +114,22 @@ class Noise<TOut>
   protected static dimensionInput(d: Dimension) {
     switch (d) {
       case 1:
-        return Noise.numberFuncIdentity
+        return Noise.identityNumberFn
       case 2:
-        return (x = 0, y = 0) => x + 198491317 * y
+        return (x = 0, y = 0) => x + 198_491_317 * y
       case 3:
-        return (x = 0, y = 0, z = 0) => x + 198491317 * y + 6542989 * z
+        return (x = 0, y = 0, z = 0) => x + 198_491_317 * y + 6_542_989 * z
       case 4:
-        return (x = 0, y = 0, z = 0, w = 0) => x + 198491317 * y + 6542989 * z + 357239 * w
+        return (x = 0, y = 0, z = 0, w = 0) => x + 198_491_317 * y + 6_542_989 * z + 357_239 * w
     }
   }
 
   protected static range([yMin, yMax]: [number, number]) {
     return (x: number) => ((x - -0x7fff_ffff) / (0x8000_0000 - -0x7fff_ffff)) * (yMax - yMin) + yMin
+  }
+
+  protected static clamp([min, max]: [number, number]) {
+    return (x: number) => (x < min ? min : x > max ? max : x)
   }
 
   protected generateSeed(): number {
@@ -175,12 +160,12 @@ class Noise<TOut>
     if (!options.lerp) {
       return new Noise(options)
     } else {
-      return new NoiseBuilderLerp(options)
+      return new NoiseLerp(options)
     }
   }
 
   static createDefault(): Noise<number> {
-    return new Noise({ input: (x: number) => x, output: x => x })
+    return new Noise({ output: Noise.identityNumberFn })
   }
 
   //#endregion
@@ -252,7 +237,7 @@ class Noise<TOut>
   }
 
   asCircle(radius: number = 1, angleRange: Range = [0, 2 * Math.PI]): NoiseFinal<[number, number]> {
-    return this.asNumber(angleRange).map(a => [radius * Math.cos(a), radius * Math.sin(a)])
+    return this.asNumber(angleRange).map(θ => [radius * Math.cos(θ), radius * Math.sin(θ)])
   }
 
   asSphere(radius: number = 1): NoiseFinal<[number, number, number]> {
@@ -309,7 +294,7 @@ class Noise<TOut>
    * @returns
    */
   asGuassian(mean: number = 0, stdev: number = 1, clamp?: Range): NoiseFinal<[number, number]> {
-    const c = clamp ? (x: number) => (x < clamp[0] ? clamp[0] : x > clamp[1] ? clamp[1] : x) : null
+    const c = clamp ? Noise.clamp(clamp) : null
 
     return this.asTuple(
       n => n.asNumber([0, 2 * Math.PI]),
@@ -331,7 +316,7 @@ class Noise<TOut>
       throw Error(`Poisson algorithm requires lambda in the range (0, 30). Lambda = ${lambda}`)
     }
 
-    const c = clamp ? (x: number) => (x < clamp[0] ? clamp[0] : x > clamp[1] ? clamp[1] : x) : null,
+    const c = clamp ? Noise.clamp(clamp) : null,
       inverseTransform = (u: number) => {
         let x = 0,
           p = Math.exp(-lambda),
@@ -352,10 +337,11 @@ class Noise<TOut>
       return this.asInteger([1, ds])
     }
 
-    const ss = this.clone().sequence().seed(this.generateSeed()).asNumber().noise(),
-      ns = ds.map(d => this.asInteger([1, d]).seed(ss()).noise())
+    const ss = this.clone().sequence().seed(this.generateSeed()).asNumber().noise()
 
-    return this.asNumber().map(x => ns.map(n => n(x)).reduce((p, c) => p + c, 0))
+    return this.asTuple(...ds.map(d => this.clone().seed(ss()).asInteger([1, d]))).map(d =>
+      d.reduce((p, c) => p + c, 0),
+    )
   }
 
   asArray<T>(length: number | NoiseFunctor<number, TOut>, nfn: NoiseFunctor<T, TOut>): NoiseFinal<T[]> {
@@ -365,7 +351,7 @@ class Noise<TOut>
   asTuple<TNs extends ReadonlyArray<NoiseFunctor<OutputArg, TOut>>>(
     ...ns: TNs
   ): Noise<NoiseTupleFunctorOut<TOut, TNs>> {
-    return new NoiseTuple(this, tupleFunctor(this, ns)) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+    return new NoiseTuple(this, tupleFunctor(this, ns)) as InferredResult
   }
 
   asObject<T extends NoiseFunctorObject<OutputArg, TOut>>(nf: T): Noise<NoiseObjectFunctorOut<TOut, T>> {
@@ -384,15 +370,11 @@ class Noise<TOut>
   //#region Props
 
   get inputFn() {
-    return this.options.input ?? Noise.numberFuncIdentity
+    return this.options.input ?? Noise.identityNumberFn
   }
 
   get outputFn() {
     return this.options.output
-  }
-
-  get name() {
-    return this.options.name
   }
 
   seed(value: Seed): Noise<TOut> {
@@ -403,15 +385,11 @@ class Noise<TOut>
     return Noise.factory({ ...this.options, onSeeding: cb })
   }
 
-  named(value: string): Noise<TOut> {
-    return Noise.factory({ ...this.options, name: value })
-  }
-
   map(): Noise<number>
   map<TOutNext>(fn: (x: TOut) => TOutNext): Noise<TOutNext>
   map<TOutNext>(fn?: (x: TOut) => TOutNext): Noise<number> | Noise<TOutNext> {
     if (!fn) {
-      return Noise.factory({ ...this.options, output: Noise.numberFuncIdentity })
+      return Noise.factory({ ...this.options, output: Noise.identityNumberFn })
     }
 
     const outFn = this.outputFn,
@@ -425,7 +403,7 @@ class Noise<TOut>
   //#region Execution
 
   noise(): (...x: number[]) => TOut {
-    const n = Noise.numberPipe(squirrel5(this.generateSeed()), this.options.transform),
+    const n = squirrel5(this.generateSeed()),
       iFn = this.options.input,
       oFn = this.options.output
 
@@ -433,7 +411,7 @@ class Noise<TOut>
   }
 
   *generator(stop = Infinity, step = 1): IterableIterator<TOut> {
-    const n = Noise.numberPipe(squirrel5(this.generateSeed()), this.options.transform),
+    const n = squirrel5(this.generateSeed()),
       oFn = this.options.output
 
     for (let i = 0; i < stop; i += step) {
@@ -444,7 +422,7 @@ class Noise<TOut>
   //#endregion
 }
 
-class NoiseBuilderLerp<TOut> extends Noise<TOut> {
+class NoiseLerp<TOut> extends Noise<TOut> {
   private static lerp1D = (f0: number, f1: number, x: number) => f0 + x * (f1 - f0)
 
   private static lerp2D = (f00: number, f01: number, f10: number, f11: number, x: number, y: number) =>
@@ -480,17 +458,18 @@ class NoiseBuilderLerp<TOut> extends Noise<TOut> {
   }
 
   noise(): (...x: number[]) => TOut {
-    const ni = Noise.numberPipe(squirrel5(this.generateSeed()), this.options.transform),
+    const ni = squirrel5(this.generateSeed()),
       iFn = this.options.input,
-      n = iFn ? (...x: number[]) => ni(iFn(...x)) : (x: number) => ni(x)
+      n = iFn ? (...x: number[]) => ni(iFn(...x)) : (x: number) => ni(x),
+      oFn = this.options.output
 
     switch (this.options.lerp) {
       case 1:
-        return (x = 0) => this.options.output(NoiseBuilderLerp.lerp1D(n(Math.floor(x)), n(Math.ceil(x)), x % 1))
+        return (x = 0) => oFn(NoiseLerp.lerp1D(n(Math.floor(x)), n(Math.ceil(x)), x % 1))
       case 2:
         return (x = 0, y = 0) =>
-          this.options.output(
-            NoiseBuilderLerp.lerp2D(
+          oFn(
+            NoiseLerp.lerp2D(
               n(Math.floor(x), Math.floor(y)),
               n(Math.floor(x), Math.ceil(y)),
               n(Math.ceil(x), Math.floor(y)),
@@ -501,8 +480,8 @@ class NoiseBuilderLerp<TOut> extends Noise<TOut> {
           )
       case 3:
         return (x = 0, y = 0, z = 0) =>
-          this.options.output(
-            NoiseBuilderLerp.lerp3D(
+          oFn(
+            NoiseLerp.lerp3D(
               n(Math.floor(x), Math.floor(y), Math.floor(z)),
               n(Math.floor(x), Math.floor(y), Math.ceil(z)),
               n(Math.floor(x), Math.ceil(y), Math.floor(z)),
@@ -528,11 +507,11 @@ class NoiseBuilderLerp<TOut> extends Noise<TOut> {
   // smoothed between the whole values, producing noise that has
   // a lower frequency.
   *generator(stop = Infinity, step = 1): IterableIterator<TOut> {
-    const ni = Noise.numberPipe(squirrel5(this.generateSeed()), this.options.transform),
+    const ni = squirrel5(this.generateSeed()),
       oFn = this.options.output
 
     for (let i = 0; i < stop; i += step) {
-      yield oFn(NoiseBuilderLerp.lerp1D(ni(Math.floor(i)), ni(Math.ceil(i)), i % 1))
+      yield oFn(NoiseLerp.lerp1D(ni(Math.floor(i)), ni(Math.ceil(i)), i % 1))
     }
   }
 }
@@ -550,7 +529,7 @@ class NoiseArray<TOut, TParentOut> extends Noise<TOut[]> {
     return typeof this.length === 'function'
       ? this.length(this.parent.clone()).noise()
       : this.length instanceof Noise
-        ? this.length.clone().input(Noise.numberFuncIdentity).noise()
+        ? this.length.clone().input(Noise.identityNumberFn).noise()
         : () => this.length
   }
 
@@ -629,7 +608,7 @@ class NoiseTuple<TNs extends ReadonlyArray<NoiseFinal<OutputArg>>> extends Noise
   map<TOutNext>(fn: (x: NoiseTupleOut<TNs>) => TOutNext): Noise<TOutNext>
   map<TOutNext>(fn?: (x: NoiseTupleOut<TNs>) => TOutNext): Noise<number> | Noise<TOutNext> {
     if (!fn) {
-      return Noise.factory({ ...this.options, output: Noise.numberFuncIdentity })
+      return Noise.factory({ ...this.options, output: Noise.identityNumberFn })
     }
 
     return new NoiseTupleWithOutput<TNs, TOutNext>(this.parent, this.ns, fn)
@@ -662,7 +641,7 @@ class NoiseTupleWithOutput<TNs extends ReadonlyArray<NoiseFinal<OutputArg>>, TOu
   map<TOutNext>(fn: (x: TOut) => TOutNext): Noise<TOutNext>
   map<TOutNext>(fn?: (x: TOut) => TOutNext): Noise<number> | Noise<TOutNext> {
     if (!fn) {
-      return Noise.factory({ ...this.options, output: Noise.numberFuncIdentity })
+      return Noise.factory({ ...this.options, output: Noise.identityNumberFn })
     }
 
     const outFn = this.out,
